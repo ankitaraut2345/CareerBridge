@@ -167,13 +167,13 @@ export const LoginPage = () => {
           {/* ─── LEFT COLUMN: Sign In Section ─── */}
           <div className="flex flex-col justify-between">
             <div>
-              {/* Official Horizontal CareerBridge Logo */}
-              <div className="mb-6 sm:mb-8">
+              {/* Official Stacked CareerBridge Logo */}
+              <div className="mb-5 sm:mb-6">
                 <Link to="/" className="inline-block transition-transform hover:scale-[1.01]">
                   <img
                     src="/careerbridge-logo.png"
-                    alt="CareerBridge — Where Talent Meets Opportunity & the Right Guidance"
-                    className="h-12 sm:h-14 w-auto object-contain"
+                    alt="CareerBridge"
+                    className="h-16 sm:h-20 w-auto object-contain"
                   />
                 </Link>
               </div>

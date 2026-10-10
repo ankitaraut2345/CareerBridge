@@ -163,8 +163,7 @@ export const EditOpportunityPage = () => {
       return;
     }
     if (!formData.role.trim()) {
-      setError('Job Role is required');
-      return;
+      formData.role = formData.title.trim() || 'Software Engineer';
     }
     if (!formData.description.trim()) {
       setError('Job Description is required');

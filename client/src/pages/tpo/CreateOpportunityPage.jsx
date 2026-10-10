@@ -138,6 +138,7 @@ export const CreateOpportunityPage = () => {
     try {
       const payload = {
         ...formData,
+        role: formData.role?.trim() || formData.title?.trim() || 'Software Engineer',
         status: targetStatus,
         requiredSkills: formData.requiredSkills
           .split(',')

@@ -46,14 +46,14 @@ const verifyAlumni = asyncHandler(async (req, res) => {
   }
 
   // Memory fallback
-  const user = await findUserById(id);
-  if (!user || user.role !== 'ALUMNI') {
+  const memUser = memoryUsers.find((u) => (u._id ? u._id.toString() : u.id) === id);
+  if (!memUser || memUser.role !== 'ALUMNI') {
     throw new NotFoundError('Alumni user not found');
   }
-  user.verificationStatus = status;
+  memUser.verificationStatus = status;
   await saveAlumniProfile(id, { verificationStatus: status });
 
-  res.status(200).json({ success: true, data: { id: user._id || user.id, verificationStatus: user.verificationStatus } });
+  res.status(200).json({ success: true, data: { id: memUser._id || memUser.id, verificationStatus: memUser.verificationStatus } });
 });
 
 module.exports = { getPendingAlumni, verifyAlumni };

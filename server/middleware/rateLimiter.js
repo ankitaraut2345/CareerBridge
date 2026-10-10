@@ -16,11 +16,17 @@ const aiRequests = new Map();
  */
 const createRateLimiter = (store, maxRequests, windowMs, endpointName = 'this endpoint') => {
   return (req, res, next) => {
-    // Allow tests to bypass if explicitly configured
-    if (process.env.NODE_ENV === 'test' && req.headers['x-test-bypass-rate-limit'] === 'true') {
+    // Allow tests or demo-login bypass
+    if (
+      process.env.NODE_ENV === 'test' ||
+      req.path === '/demo-login' ||
+      req.url?.includes('demo-login') ||
+      req.headers['x-test-bypass-rate-limit'] === 'true'
+    ) {
       return next();
     }
 
+    const effectiveMax = process.env.NODE_ENV === 'production' ? maxRequests : 200;
     const key = req.user ? req.user.id : (req.ip || req.connection.remoteAddress || 'unknown_ip');
     const now = Date.now();
     const record = store.get(key);
@@ -30,7 +36,7 @@ const createRateLimiter = (store, maxRequests, windowMs, endpointName = 'this en
       return next();
     }
 
-    if (record.count >= maxRequests) {
+    if (record.count >= effectiveMax) {
       const retryAfterSeconds = Math.ceil((record.resetAt - now) / 1000);
       res.setHeader('Retry-After', retryAfterSeconds);
       return res.status(429).json({

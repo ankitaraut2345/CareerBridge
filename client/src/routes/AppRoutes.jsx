@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
+import PortalLayout from '../layouts/PortalLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
@@ -31,276 +32,86 @@ import TpoApplicationDetailPage from '../pages/tpo/TpoApplicationDetailPage';
 import CreateOpportunityPage from '../pages/tpo/CreateOpportunityPage';
 import EditOpportunityPage from '../pages/tpo/EditOpportunityPage';
 import NotificationsPage from '../pages/NotificationsPage';
+import SavedOpportunitiesPage from '../pages/SavedOpportunitiesPage';
+import AiAssistantPage from '../pages/AiAssistantPage';
+import CareerRoadmapPage from '../pages/CareerRoadmapPage';
+import StudentProfilePage from '../pages/StudentProfilePage';
+import SettingsPage from '../pages/SettingsPage';
+import HelpSupportPage from '../pages/HelpSupportPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 /**
  * CareerBridge Central Application Routing
- * Includes protected routes based on authentication and role.
+ * - Public routes use MainLayout (Navbar + Footer)
+ * - Authenticated SaaS portal routes use PortalLayout (Left Sidebar + Header + User Avatar dropdown)
  */
 export const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<MainLayout />}>
-        {/* Landing Page */}
-        <Route index element={<LandingPage />} />
+      {/* ─── 1. Authenticated SaaS Portal Routes (Matches All 13 Mockups) ─── */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT', 'ALUMNI', 'TPO', 'ADMIN']}>
+            <PortalLayout />
+          </ProtectedRoute>
+        }
+      >
+        {/* Student Pages */}
+        <Route path="student" element={<StudentPage />} />
+        <Route path="student/opportunities" element={<StudentOpportunitiesPage />} />
+        <Route path="student/applications" element={<MyApplicationsPage />} />
+        <Route path="student/applications/:id" element={<ApplicationDetailPage />} />
+        <Route path="student/saved-opportunities" element={<SavedOpportunitiesPage />} />
+        <Route path="student/ai-assistant" element={<AiAssistantPage />} />
+        <Route path="student/roadmap" element={<CareerRoadmapPage />} />
+        <Route path="student/mentors" element={<MentorDiscoveryPage />} />
+        <Route path="student/mentors/:id" element={<MentorDetailPage />} />
+        <Route path="student/mentorship" element={<StudentMentorshipPage />} />
+        <Route path="student/referrals" element={<StudentReferralsPage />} />
+        <Route path="student/referrals/my" element={<MyReferralRequestsPage />} />
+        <Route path="student/referrals/:id" element={<ReferralDetailPage />} />
+        <Route path="student/profile" element={<StudentProfilePage />} />
+        <Route path="student/chat" element={<ChatPage />} />
 
-        {/* Auth Routes */}
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-
-        {/* Student */}
-        <Route
-          path="student"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <StudentPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/opportunities"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <StudentOpportunitiesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/applications"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <MyApplicationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/applications/:id"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <ApplicationDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/mentors"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <MentorDiscoveryPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/mentors/:id"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <MentorDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/mentorship"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <StudentMentorshipPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/referrals"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <StudentReferralsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/referrals/my"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <MyReferralRequestsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="student/referrals/:id"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <ReferralDetailPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Student Chat */}
-        <Route
-          path="student/chat"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT']}>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Opportunity Detail View */}
+        {/* Opportunity Detail in Portal */}
         <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
 
-        {/* Alumni – dashboard */}
-        <Route
-          path="alumni"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <AlumniPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Alumni Pages */}
+        <Route path="alumni" element={<AlumniPage />} />
+        <Route path="alumni/profile" element={<AlumniProfilePage />} />
+        <Route path="alumni/mentorship" element={<AlumniMentorshipPage />} />
+        <Route path="alumni/referrals" element={<AlumniReferralsPage />} />
+        <Route path="alumni/referrals/create" element={<CreateReferralPage />} />
+        <Route path="alumni/referrals/:id" element={<AlumniReferralDetailPage />} />
+        <Route path="alumni/chat" element={<ChatPage />} />
 
-        {/* Alumni – mentorship management */}
-        <Route
-          path="alumni/mentorship"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <AlumniMentorshipPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* TPO Pages */}
+        <Route path="tpo" element={<TpoPage />} />
+        <Route path="tpo/opportunities" element={<TpoOpportunitiesPage />} />
+        <Route path="tpo/opportunities/create" element={<CreateOpportunityPage />} />
+        <Route path="tpo/opportunities/:id/edit" element={<EditOpportunityPage />} />
+        <Route path="tpo/opportunities/:id/applicants" element={<OpportunityApplicantsPage />} />
+        <Route path="tpo/applications/:id" element={<TpoApplicationDetailPage />} />
 
-        {/* Alumni – referrals hub */}
-        <Route
-          path="alumni/referrals"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <AlumniReferralsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="alumni/referrals/create"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <CreateReferralPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="alumni/referrals/:id"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <AlumniReferralDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Admin Pages */}
+        <Route path="admin" element={<AdminPage />} />
+        <Route path="admin/alumni-verification" element={<AdminAlumniVerificationPage />} />
 
-        {/* Alumni Chat */}
-        <Route
-          path="alumni/chat"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Universal SaaS Pages across all roles (Matches Mockups 1, 2, 4, 5) */}
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="help" element={<HelpSupportPage />} />
+        <Route path="support" element={<HelpSupportPage />} />
+      </Route>
 
-        {/* Universal Chat */}
-        <Route
-          path="chat"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT', 'ALUMNI']}>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Universal In-App Notifications */}
-        <Route
-          path="notifications"
-          element={
-            <ProtectedRoute allowedRoles={['STUDENT', 'ALUMNI', 'TPO', 'ADMIN']}>
-              <NotificationsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Alumni – profile create / edit */}
-        <Route
-          path="alumni/profile"
-          element={
-            <ProtectedRoute allowedRoles={['ALUMNI']}>
-              <AlumniProfilePage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* TPO */}
-        <Route
-          path="tpo"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <TpoPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="tpo/opportunities"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <TpoOpportunitiesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="tpo/opportunities/create"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <CreateOpportunityPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="tpo/opportunities/:id/edit"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <EditOpportunityPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="tpo/opportunities/:id/applicants"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <OpportunityApplicantsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="tpo/applications/:id"
-          element={
-            <ProtectedRoute allowedRoles={['TPO', 'ADMIN']}>
-              <TpoApplicationDetailPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin – dashboard */}
-        <Route
-          path="admin"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin – Alumni Verification */}
-        <Route
-          path="admin/alumni-verification"
-          element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <AdminAlumniVerificationPage />
-            </ProtectedRoute>
-          }
-        />
-
+      {/* ─── 2. Public / Guest Routes with MainLayout (Navbar + Hero + Footer) ─── */}
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<LandingPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

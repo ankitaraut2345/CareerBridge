@@ -6,11 +6,15 @@ const {
   getStudentAnalyses,
   prepareInterview,
   getInterviewPreparation,
+  chatCareerAssistant,
 } = require('../controllers/ai.controller');
 const { authenticate, authorize } = require('../middleware/auth.middleware');
 
 // Protect all AI routes: authenticated STUDENTS only
 router.use(authenticate, authorize('STUDENT'));
+
+// AI Career Assistant Interactive Chat (matches Image 10)
+router.post('/chat', chatCareerAssistant);
 
 // AI Resume Analysis endpoints (Phase 13)
 router.post('/resume-analysis', analyzeResume);

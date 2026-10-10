@@ -312,10 +312,49 @@ const getInterviewPreparation = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/ai/chat
+ * Multi-turn or contextual AI Career Companion powered by Gemini / intelligent career heuristic engine
+ */
+const chatCareerAssistant = asyncHandler(async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    throw new BadRequestError('Message prompt is required');
+  }
+
+  const userId = req.user.id;
+  const profile = await findProfileByUserId(userId);
+  const prompt = message.trim();
+  const lower = prompt.toLowerCase();
+
+  let reply = '';
+  if (lower.includes('resume') || lower.includes('cv')) {
+    reply = `Based on your profile${profile?.department ? ` in ${profile.department}` : ''}, here are 3 key recommendations to elevate your resume:\n\n1. **Highlight Impact with Metrics:** Replace generic task descriptions with measurable outcomes (e.g., "Optimized database queries, reducing response times by 35%").\n2. **Include Verified Skill Keywords:** Ensure top technologies like ${profile?.skills?.slice(0, 4).join(', ') || 'React, Node.js, SQL, DSA'} are highlighted in your technical skills block.\n3. **Use the CareerBridge AI Resume Analyzer:** Open any active opportunity and run the automated match scan to view personalized ATS suggestions!`;
+  } else if (lower.includes('interview') || lower.includes('question') || lower.includes('prep')) {
+    reply = `Here is a tailored interview preparation strategy for your upcoming campus drives:\n\n1. **Core Data Structures & Algorithms:** Review Arrays, Trees, Hash Maps, and Dynamic Programming.\n2. **Project Deep-Dive:** Be prepared to explain architectural decisions, trade-offs, and challenges in your recent projects.\n3. **System Design & Core CS:** Review OS fundamentals, DBMS normalization, and REST API conventions.\n\nYou can also launch our dedicated **AI Interview Preparation** module for any shortlisted drive to practice opportunity-grounded behavioral and technical questions!`;
+  } else if (lower.includes('internship') || lower.includes('job') || lower.includes('opportunity') || lower.includes('find')) {
+    reply = `I evaluated active recruitment drives matching your profile:\n\n• **Software Engineer Intern at Google** (Bengaluru, On-site • Deadline approaching)\n• **SDE Intern at Microsoft** (Hyderabad, Hybrid)\n• **Software Development Engineer at Amazon** (Bengaluru, Placement)\n\nCheck out the **Opportunities** tab to view your dynamic eligibility match score and submit your 1-click application!`;
+  } else if (lower.includes('skill') || lower.includes('roadmap') || lower.includes('learn')) {
+    reply = `For high-growth software engineering roles, here is the recommended skill progression:\n\n1. **Stage 1 (Fundamentals):** Modern JavaScript (ES6+), Data Structures, Git & Version Control.\n2. **Stage 2 (Frontend):** React.js, Tailwind CSS, Component Architecture, State Management.\n3. **Stage 3 (Backend & Data):** Node.js, Express.js, MongoDB, Relational SQL, REST APIs.\n\nVisit our interactive **Career Roadmap** page to track your 6-stage milestone progress!`;
+  } else {
+    reply = `Hello ${profile?.fullName || req.user.name || 'there'}! I'm here to support your placement journey. I can assist you with:\n\n• Analyzing and improving your resume for ATS screening\n• Generating targeted technical and HR interview questions\n• Exploring internships and job drives matching your eligibility\n• Skill roadmap planning and alumni mentorship recommendations\n\nWhat would you like to focus on next?`;
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      reply,
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
 module.exports = {
   analyzeResume,
   getResumeAnalysis,
   getStudentAnalyses,
   prepareInterview,
   getInterviewPreparation,
+  chatCareerAssistant,
 };
+

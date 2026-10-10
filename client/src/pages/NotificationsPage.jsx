@@ -22,13 +22,21 @@ import {
   AlertCircle,
   Inbox,
   Sparkles,
+  Briefcase,
+  Users,
+  Award,
+  Send,
+  Calendar,
+  Layers,
+  ChevronRight,
+  MoreVertical,
 } from 'lucide-react';
 
 export const NotificationsPage = () => {
   const navigate = useNavigate();
   const { unreadCount, refreshUnreadCount } = useNotifications();
 
-  const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'UNREAD'
+  const [activeTab, setActiveTab] = useState('All'); // 'All' | 'Opportunities' | 'Applications' | 'Mentorship' | 'Referrals' | 'System'
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,17 +47,14 @@ export const NotificationsPage = () => {
 
   // Fetch paginated notifications
   const fetchPageNotifications = useCallback(
-    async (currentPage = 1, currentFilter = activeTab) => {
+    async (currentPage = 1) => {
       setLoading(true);
       setError(null);
       try {
         const params = {
           page: currentPage,
-          limit: 15,
+          limit: 20,
         };
-        if (currentFilter === 'UNREAD') {
-          params.isRead = false;
-        }
 
         const res = await getNotifications(params);
         setNotifications(res.data || []);
@@ -65,17 +70,12 @@ export const NotificationsPage = () => {
         setLoading(false);
       }
     },
-    [activeTab]
+    []
   );
 
   useEffect(() => {
-    fetchPageNotifications(page, activeTab);
-  }, [fetchPageNotifications, page, activeTab]);
-
-  const handleTabChange = (newTab) => {
-    setActiveTab(newTab);
-    setPage(1);
-  };
+    fetchPageNotifications(page);
+  }, [fetchPageNotifications, page]);
 
   const handleNotificationClick = async (notif) => {
     const notifId = notif._id || notif.id;
@@ -145,9 +145,6 @@ export const NotificationsPage = () => {
       await markAllNotificationsAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       refreshUnreadCount();
-      if (activeTab === 'UNREAD') {
-        fetchPageNotifications(1, 'UNREAD');
-      }
     } catch (err) {
       console.error('Mark all read error:', err);
     } finally {
@@ -155,221 +152,214 @@ export const NotificationsPage = () => {
     }
   };
 
+  // Filter notifications by category tab
+  const filteredNotifications = notifications.filter((n) => {
+    if (activeTab === 'Opportunities') return n.type?.includes('OPPORTUNITY');
+    if (activeTab === 'Applications') return n.type?.includes('APPLICATION') || n.type?.includes('INTERVIEW');
+    if (activeTab === 'Mentorship') return n.type?.includes('MENTORSHIP');
+    if (activeTab === 'Referrals') return n.type?.includes('REFERRAL');
+    if (activeTab === 'System') return n.type?.includes('SYSTEM') || n.type?.includes('PROFILE');
+    return true;
+  });
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4F46E5] shadow-sm">
-              <Bell className="w-5 h-5" />
+    <div className="space-y-7 pb-10">
+      {/* 1. SaaS Hero Banner matching Image 4 */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 border border-slate-200/80 p-6 sm:p-8 lg:p-9 shadow-xs">
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-purple-200/40 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-sky-200/40 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold text-[#172033] tracking-tight leading-tight mb-2">
+              Notifications
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
+              Stay updated with real-time alerts on your applications, interviews, referrals, and drives.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllAsRead}
+                  disabled={actionInProgress === 'ALL'}
+                  className="px-4 py-2 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>Mark All Read</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => fetchPageNotifications(page)}
+                disabled={loading}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172033] tracking-tight">
-                Notifications
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Stay informed with platform updates, requests, and opportunities
-              </p>
+          </div>
+
+          <div className="hidden md:flex flex-col items-end justify-center">
+            <div className="px-5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs border border-indigo-100 shadow-xs text-right">
+              <span className="block text-xs font-bold text-slate-400 italic">Push Center</span>
+              <span className="block text-sm font-extrabold text-[#4F46E5] italic">
+                {unreadCount > 0 ? `${unreadCount} Unread Alerts` : 'All Caught Up ✨'}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Global actions */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={handleMarkAllAsRead}
-              disabled={actionInProgress === 'ALL'}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-[#4F46E5] bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50"
-            >
-              <CheckCheck className="w-4 h-4" />
-              <span>Mark all as read</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => fetchPageNotifications(page, activeTab)}
-            disabled={loading}
-            className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#172033] hover:bg-slate-50 transition-colors"
-            title="Refresh notifications"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+        {/* 4 Feature Guidance Cards matching Image 4 */}
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-indigo-100/70">
+          {[
+            { title: 'Drive Alerts', desc: 'Instant company announcements', icon: Briefcase, color: 'bg-blue-100 text-[#4F46E5]' },
+            { title: 'Interview Updates', desc: 'Schedules and links', icon: Calendar, color: 'bg-purple-100 text-[#7C3AED]' },
+            { title: 'Mentorship', desc: 'Session replies & notes', icon: Users, color: 'bg-emerald-100 text-emerald-700' },
+            { title: 'Referral Status', desc: 'Alumni reviews & referrals', icon: Send, color: 'bg-amber-100 text-amber-700' },
+          ].map((card, idx) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={idx}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 backdrop-blur-2xs border border-slate-200/60 shadow-2xs"
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${card.color}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#172033] truncate">{card.title}</div>
+                  <div className="text-[11px] text-slate-500 truncate">{card.desc}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tabs and Filters */}
-      <div className="flex items-center justify-between mt-6 mb-4">
-        <div className="flex items-center p-1 bg-slate-100/80 rounded-xl border border-slate-200/80">
-          <button
-            type="button"
-            onClick={() => handleTabChange('ALL')}
-            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-              activeTab === 'ALL'
-                ? 'bg-white text-[#172033] shadow-sm'
-                : 'text-slate-600 hover:text-[#172033]'
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTabChange('UNREAD')}
-            className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-              activeTab === 'UNREAD'
-                ? 'bg-white text-[#4F46E5] shadow-sm'
-                : 'text-slate-600 hover:text-[#172033]'
-            }`}
-          >
-            <span>Unread</span>
-            {unreadCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-[#4F46E5] block" />
-            )}
-          </button>
+      {/* 2. Filter Tabs matching Image 4 */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
+          {['All', 'Opportunities', 'Applications', 'Mentorship', 'Referrals', 'System'].map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`text-sm font-bold pb-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === tab
+                  ? 'border-[#4F46E5] text-[#4F46E5]'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        <span className="text-xs text-slate-500 font-medium">
-          {totalCount} {totalCount === 1 ? 'notification' : 'notifications'}
+        <span className="text-xs text-slate-500 font-medium hidden sm:block">
+          {filteredNotifications.length} {filteredNotifications.length === 1 ? 'alert' : 'alerts'}
         </span>
       </div>
 
-      {/* Main Content Area */}
+      {/* 3. Notification List matching Image 4 */}
       {loading && notifications.length === 0 ? (
-        <div className="space-y-3 mt-4">
+        <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="p-4 rounded-2xl bg-white border border-slate-200/80 animate-pulse flex items-start gap-4"
-            >
-              <div className="w-10 h-10 rounded-xl bg-slate-100" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-slate-100 rounded w-1/4" />
-                <div className="h-3 bg-slate-100 rounded w-3/4" />
-              </div>
-            </div>
+            <div key={i} className="h-24 rounded-3xl bg-slate-100 animate-pulse" />
           ))}
         </div>
-      ) : error ? (
-        <div className="p-8 my-6 text-center rounded-2xl bg-white border border-rose-100 shadow-sm">
-          <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-800">Unable to load notifications</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">{error}</p>
-          <button
-            type="button"
-            onClick={() => fetchPageNotifications(page, activeTab)}
-            className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Try again
-          </button>
-        </div>
-      ) : notifications.length === 0 ? (
-        /* Empty State */
-        <div className="py-16 px-4 my-6 text-center rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-          <div className="w-14 h-14 rounded-2xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center mx-auto mb-4 border border-indigo-100">
-            <Sparkles className="w-7 h-7" />
-          </div>
-          <h2 className="text-lg font-bold text-[#172033]">You're all caught up!</h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-            {activeTab === 'UNREAD'
-              ? 'You have no unread notifications at this time.'
-              : 'No notifications to show right now. When actions happen, you will see them here.'}
+      ) : filteredNotifications.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-2">
+          <Bell className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-[#172033]">No notifications here</h3>
+          <p className="text-xs text-slate-500">
+            You're all caught up on alerts in this category.
           </p>
         </div>
       ) : (
-        /* Notification List */
-        <div className="space-y-3 mt-4">
-          {notifications.map((notif) => {
-            const { icon: VisualIcon, color, badge } = getNotificationVisuals(notif.type);
+        <div className="space-y-3.5">
+          {filteredNotifications.map((notif) => {
             const notifId = notif._id || notif.id;
-            const isItemBusy = actionInProgress === notifId;
+            const visuals = getNotificationVisuals(notif.type);
+            const isRead = notif.isRead;
 
             return (
               <div
                 key={notifId}
                 onClick={() => handleNotificationClick(notif)}
-                className={`group p-4 sm:p-5 rounded-2xl border transition-all duration-150 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  !notif.isRead
-                    ? 'bg-indigo-50/20 border-indigo-200/80 shadow-sm hover:border-indigo-300'
-                    : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-sm'
+                className={`p-5 rounded-3xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                  isRead
+                    ? 'bg-white border-slate-200/80 hover:border-slate-300'
+                    : 'bg-indigo-50/40 border-indigo-200 hover:border-indigo-300 shadow-xs'
                 }`}
               >
-                <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                  {/* Category icon */}
+                <div className="flex items-start gap-4">
+                  {/* Colored icon box matching Image 4 */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center mt-0.5 ${color}`}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-base shadow-2xs ${
+                      visuals.bg || 'bg-indigo-100'
+                    }`}
                   >
-                    <VisualIcon className="w-5 h-5" />
+                    {visuals.icon || '🔔'}
                   </div>
 
-                  {/* Text content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                        {badge}
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        {formatTimeAgo(notif.createdAt)}
-                      </span>
-                      {!notif.isRead && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4F46E5] bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5]" />
-                          Unread
-                        </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4
+                        className={`text-sm sm:text-base font-extrabold leading-tight ${
+                          isRead ? 'text-[#172033]' : 'text-[#4F46E5]'
+                        }`}
+                      >
+                        {notif.title}
+                      </h4>
+                      {!isRead && (
+                        <span className="w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
                       )}
                     </div>
 
-                    <h3
-                      className={`text-sm sm:text-base font-bold ${
-                        !notif.isRead ? 'text-[#172033]' : 'text-slate-800'
-                      }`}
-                    >
-                      {notif.title}
-                    </h3>
-
-                    <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
                       {notif.message}
                     </p>
 
-                    {notif.actionUrl && (
-                      <div className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-[#4F46E5] group-hover:text-[#7C3AED] transition-colors">
-                        <span>View details</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </div>
-                    )}
+                    <div className="text-[11px] text-slate-400 font-medium">
+                      {formatTimeAgo(notif.createdAt)}
+                    </div>
                   </div>
                 </div>
 
-                {/* Individual notification actions */}
-                <div
-                  className="flex items-center gap-2 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 w-full sm:w-auto justify-end"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                {/* Right Actions */}
+                <div className="flex items-center gap-2 justify-end self-end sm:self-center flex-shrink-0">
+                  {notif.actionUrl && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(notif.actionUrl);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>View</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={(e) => handleToggleRead(e, notif)}
-                    disabled={isItemBusy}
-                    title={notif.isRead ? 'Mark as unread' : 'Mark as read'}
-                    className="p-2 rounded-xl text-slate-500 hover:text-[#4F46E5] hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    title={isRead ? 'Mark as unread' : 'Mark as read'}
                   >
-                    {notif.isRead ? (
-                      <RotateCcw className="w-4 h-4" />
-                    ) : (
-                      <Check className="w-4 h-4 text-[#4F46E5]" />
-                    )}
+                    <Check className="w-4 h-4" />
                   </button>
 
                   <button
                     type="button"
                     onClick={(e) => handleDelete(e, notif)}
-                    disabled={isItemBusy}
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                     title="Delete notification"
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors border border-transparent hover:border-rose-100"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -377,33 +367,6 @@ export const NotificationsPage = () => {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-8 pt-4 border-t border-slate-200">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 transition-colors"
-          >
-            Previous
-          </button>
-
-          <span className="text-xs sm:text-sm text-slate-500 font-medium">
-            Page {page} of {totalPages}
-          </span>
-
-          <button
-            type="button"
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 transition-colors"
-          >
-            Next
-          </button>
         </div>
       )}
     </div>

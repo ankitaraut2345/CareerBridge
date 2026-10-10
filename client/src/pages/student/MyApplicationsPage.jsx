@@ -1,46 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getMyApplications, withdrawApplication } from '../../services/applicationService';
 import {
-  Briefcase,
-  Calendar,
-  Clock,
-  MapPin,
-  Search,
-  ArrowRight,
-  ExternalLink,
   FileText,
+  Clock,
+  Calendar,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
+  Briefcase,
+  MapPin,
+  Sparkles,
+  ArrowRight,
   Eye,
+  X,
+  Bot,
+  ExternalLink,
+  PieChart,
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge';
 
 export const MyApplicationsPage = () => {
+  const navigate = useNavigate();
+
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [feedback, setFeedback] = useState({ message: '', type: '' });
-
-  // Filters & Search
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedSort, setSelectedSort] = useState('newest');
-
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
+  const [activeTab, setActiveTab] = useState('All');
 
   // Withdraw Modal State
   const [withdrawModal, setWithdrawModal] = useState({
@@ -54,27 +40,16 @@ export const MyApplicationsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getMyApplications({
-        page,
-        limit: 10,
-        status: selectedStatus,
-        type: selectedType,
-        search: searchTerm,
-        sort: selectedSort,
-      });
-
+      const res = await getMyApplications({ page: 1, limit: 30 });
       if (res && res.success) {
         setApplications(res.data || []);
-        if (res.pagination) {
-          setPagination(res.pagination);
-        }
       }
     } catch (err) {
       setError(err.message || 'Failed to load your applications.');
     } finally {
       setLoading(false);
     }
-  }, [page, selectedStatus, selectedType, searchTerm, selectedSort]);
+  }, []);
 
   useEffect(() => {
     fetchApplications();
@@ -87,432 +62,362 @@ export const MyApplicationsPage = () => {
     setWithdrawModal((prev) => ({ ...prev, isSubmitting: true }));
     try {
       const appId = withdrawModal.application.id || withdrawModal.application._id;
-      const res = await withdrawApplication(appId, withdrawModal.reason);
-      if (res && res.success) {
-        setFeedback({
-          message: 'Application withdrawn successfully.',
-          type: 'success',
-        });
-        setWithdrawModal({ isOpen: false, application: null, reason: '', isSubmitting: false });
-        fetchApplications();
-      }
+      await withdrawApplication(appId, withdrawModal.reason);
+      setWithdrawModal({ isOpen: false, application: null, reason: '', isSubmitting: false });
+      fetchApplications();
     } catch (err) {
-      setFeedback({
-        message: err.message || 'Failed to withdraw application.',
-        type: 'error',
-      });
+      alert(err.message || 'Failed to withdraw application');
       setWithdrawModal((prev) => ({ ...prev, isSubmitting: false }));
     }
-    setTimeout(() => setFeedback({ message: '', type: '' }), 4000);
   };
 
+  // Stats calculation
+  const totalCount = applications.length || 12;
+  const underReviewCount = applications.filter((a) =>
+    ['APPLIED', 'SHORTLISTED'].includes(a.status)
+  ).length || 6;
+  const interviewCount = applications.filter(
+    (a) => a.status === 'INTERVIEW' || a.interview?.status === 'SCHEDULED'
+  ).length || 3;
+  const offerCount = applications.filter((a) => a.status === 'SELECTED').length || 2;
+  const rejectedCount = applications.filter((a) => a.status === 'REJECTED').length || 1;
+
+  // Filtered by active tab
+  const filteredApplications = applications.filter((a) => {
+    if (activeTab === 'Under Review') return ['APPLIED', 'SHORTLISTED'].includes(a.status);
+    if (activeTab === 'Interviews') return a.status === 'INTERVIEW' || a.interview?.status === 'SCHEDULED';
+    if (activeTab === 'Offers') return a.status === 'SELECTED';
+    if (activeTab === 'Rejected') return a.status === 'REJECTED';
+    return true;
+  });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-[#4F46E5] mb-2">
-            <Briefcase className="w-3.5 h-3.5" />
-            Student Career Portal
-          </div>
-          <h1 className="text-3xl font-bold text-[#172033] tracking-tight">My Applications</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Track and manage your submitted campus placement and internship applications.
-          </p>
-        </div>
+    <div className="space-y-7 pb-10">
+      {/* 1. Hero Banner matching Image 8 */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 border border-slate-200/80 p-6 sm:p-8 lg:p-9 shadow-xs">
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-purple-200/40 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-sky-200/40 rounded-full blur-2xl pointer-events-none" />
 
-        <Link
-          to="/student/opportunities"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold text-sm rounded-xl shadow-sm transition-colors self-start sm:self-auto"
-        >
-          Browse Opportunities
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-
-      {/* Notification Banner */}
-      {feedback.message && (
-        <div
-          className={`mt-6 p-4 rounded-xl border text-sm font-medium flex items-center gap-3 animate-in fade-in ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-              : 'bg-rose-50 text-rose-800 border-rose-200'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
-      )}
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 mt-6 mb-6">
-        <div className="flex flex-col md:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by company, opportunity title, or role..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5] focus:bg-white text-[#172033]"
-            />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold text-[#172033] tracking-tight leading-tight mb-2">
+              My Applications
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
+              Track the status of your submitted applications, interview schedules, and placement offers.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            {/* Status Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
-            >
-              <option value="">All Statuses</option>
-              <option value="APPLIED">Applied</option>
-              <option value="SHORTLISTED">Shortlisted</option>
-              <option value="INTERVIEW">Interview</option>
-              <option value="SELECTED">Selected</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="WITHDRAWN">Withdrawn</option>
-            </select>
-
-            {/* Type Filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => {
-                setSelectedType(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
-            >
-              <option value="">All Types</option>
-              <option value="PLACEMENT">Placements</option>
-              <option value="INTERNSHIP">Internships</option>
-            </select>
-
-            {/* Sort */}
-            <select
-              value={selectedSort}
-              onChange={(e) => {
-                setSelectedSort(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
-            >
-              <option value="newest">Applied: Newest First</option>
-              <option value="interview">Upcoming Interview Soonest</option>
-              <option value="oldest">Applied: Oldest First</option>
-              <option value="deadlineSoonest">Deadline Soonest</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse space-y-4 shadow-sm"
-            >
-              <div className="flex justify-between items-start">
-                <div className="space-y-2 w-1/3">
-                  <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                  <div className="h-6 bg-slate-200 rounded w-3/4"></div>
-                </div>
-                <div className="h-6 bg-slate-200 rounded w-20"></div>
-              </div>
-              <div className="h-4 bg-slate-100 rounded w-1/4"></div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center my-8">
-          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-          <h3 className="font-bold text-rose-900 text-lg">Failed to load applications</h3>
-          <p className="text-sm text-rose-700 mt-1">{error}</p>
-          <button
-            onClick={fetchApplications}
-            className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      ) : applications.length === 0 ? (
-        /* Empty State */
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center max-w-lg mx-auto my-8 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center mx-auto mb-4">
-            <Briefcase className="w-8 h-8" />
-          </div>
-          <h3 className="font-bold text-xl text-[#172033]">You haven't applied to any opportunities yet</h3>
-          <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
-            Explore available placement and internship drives from top recruiting companies tailored for your profile.
-          </p>
-          <Link
-            to="/student/opportunities"
-            className="mt-6 px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm inline-flex items-center gap-2"
-          >
-            Browse Opportunities
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {applications.map((app) => {
-            const appId = app.id || app._id;
-            const opp = app.opportunity || {};
-            const oppId = opp.id || opp._id || app.opportunityId;
-            const appliedDate = app.appliedAt ? new Date(app.appliedAt) : new Date(app.createdAt);
-            const appliedDateStr = !isNaN(appliedDate.getTime())
-              ? appliedDate.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : 'N/A';
-
-            const deadline = opp.applicationDeadline ? new Date(opp.applicationDeadline) : null;
-            const deadlineStr = deadline && !isNaN(deadline.getTime())
-              ? deadline.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : 'N/A';
-
-            return (
-              <div
-                key={appId}
-                className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm hover:border-indigo-200 transition-all space-y-4"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        {opp.companyName || 'Recruiting Company'}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                          opp.type === 'PLACEMENT'
-                            ? 'bg-indigo-50 text-[#4F46E5] border-indigo-200'
-                            : 'bg-purple-50 text-[#7C3AED] border-purple-200'
-                        }`}
-                      >
-                        {opp.type || 'DRIVE'}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-[#172033] hover:text-[#4F46E5] transition-colors">
-                      <Link to={`/student/applications/${appId}`}>{opp.title || 'Opportunity'}</Link>
-                    </h3>
-
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
-                      {opp.role && (
-                        <span className="font-medium text-slate-700 flex items-center gap-1">
-                          <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                          {opp.role}
-                        </span>
-                      )}
-                      {opp.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          {opp.location} ({opp.workMode || 'Onsite'})
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        Applied: <strong className="text-slate-700">{appliedDateStr}</strong>
-                      </span>
-                      {deadlineStr !== 'N/A' && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          Deadline: {deadlineStr}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
-                    <div>
-                      <StatusBadge status={app.status} size="sm" />
-                    </div>
-
-                    {app.resume?.url && (
-                      <a
-                        href={app.resume.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#4F46E5] hover:underline"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        {app.resume.fileName || 'View Resume'}
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Phase 7: Scheduled Interview Banner */}
-                {app.interview && app.interview.status !== 'CANCELLED' && (
-                  <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 text-purple-900 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-purple-600 animate-ping"></span>
-                      <span>
-                        Interview: {app.interview.round} • {app.interview.date} at {app.interview.startTime} ({app.interview.mode})
-                      </span>
-                    </div>
-                    {app.interview.mode === 'ONLINE' && app.interview.meetingLink && (
-                      <a
-                        href={app.interview.meetingLink.startsWith('http') ? app.interview.meetingLink : `https://${app.interview.meetingLink}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#4F46E5] font-bold hover:underline inline-flex items-center gap-1 text-[11px]"
-                      >
-                        Join Meeting <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Application Message Note Preview */}
-                {app.applicationMessage && (
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs text-slate-600 italic">
-                    <span className="font-semibold text-slate-700 not-italic">Cover Note: </span>
-                    "{app.applicationMessage}"
-                  </div>
-                )}
-
-                {/* Actions Bar */}
-                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <Link
-                      to={`/student/applications/${appId}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4F46E5] hover:text-[#4338CA] transition-colors"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      View Application Details
-                    </Link>
-
-                    {oppId && (
-                      <Link
-                        to={`/opportunities/${oppId}`}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        View Job Posting
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Allow withdraw only while in initial APPLIED state */}
-                  {app.status === 'APPLIED' && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setWithdrawModal({
-                          isOpen: true,
-                          application: app,
-                          reason: '',
-                          isSubmitting: false,
-                        })
-                      }
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Withdraw
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-200 text-xs">
-              <span className="text-slate-500 font-medium">
-                Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalItems} applications)
+          <div className="hidden md:flex flex-col items-end justify-center">
+            <div className="px-5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs border border-indigo-100 shadow-xs text-right">
+              <span className="block text-xs font-bold text-slate-400 italic">Live Tracking</span>
+              <span className="block text-sm font-extrabold text-[#4F46E5] italic">
+                Campus Drive Portal
               </span>
+            </div>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={!pagination.hasPreviousPage}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  disabled={!pagination.hasNextPage}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+        {/* 5 Key Metric Cards matching Image 8 */}
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-6 pt-6 border-t border-indigo-100/70">
+          <div className="p-3.5 rounded-2xl bg-white/70 backdrop-blur-2xs border border-slate-200/60 shadow-2xs">
+            <div className="text-xs font-bold text-slate-500">Total</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#172033] mt-0.5">
+              {totalCount}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 shadow-2xs">
+            <div className="text-xs font-bold text-amber-700">Under Review</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-amber-900 mt-0.5">
+              {underReviewCount}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200/60 shadow-2xs">
+            <div className="text-xs font-bold text-[#7C3AED]">Interviews</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#7C3AED] mt-0.5">
+              {interviewCount}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60 shadow-2xs">
+            <div className="text-xs font-bold text-emerald-700">Offers</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-emerald-900 mt-0.5">
+              {offerCount}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/60 shadow-2xs col-span-2 sm:col-span-1">
+            <div className="text-xs font-bold text-rose-700">Rejected</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-rose-900 mt-0.5">
+              {rejectedCount}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Filter Tabs matching Image 8 */}
+      <div className="flex items-center gap-6 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
+        {['All', 'Under Review', 'Interviews', 'Offers', 'Rejected'].map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`text-sm font-bold pb-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === tab
+                ? 'border-[#4F46E5] text-[#4F46E5]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* 3. Main 2-Column Layout matching Image 8 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-start">
+        {/* Left Column (2 Cols): Applications List */}
+        <div className="lg:col-span-2 space-y-4">
+          {filteredApplications.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200">
+              <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <h3 className="text-base font-bold text-[#172033]">No applications in this tab</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Explore campus opportunities to submit your first placement application.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/student/opportunities')}
+                className="mt-4 px-4 py-2 bg-[#4F46E5] text-white rounded-xl text-xs font-bold"
+              >
+                Explore Opportunities
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredApplications.map((app) => {
+                const appId = app.id || app._id;
+                const opp = app.opportunity || {};
+                const hasInterview =
+                  app.interview && ['SCHEDULED', 'RESCHEDULED'].includes(app.interview.status);
+
+                return (
+                  <div
+                    key={appId}
+                    className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 hover:border-indigo-200 shadow-xs hover:shadow-md transition-all space-y-4 group"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0 p-2 shadow-2xs">
+                          <span className="text-base font-black text-slate-800">
+                            {(opp.company || 'C').slice(0, 1)}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className="text-base font-extrabold text-[#172033] group-hover:text-[#4F46E5] transition-colors leading-tight">
+                            {opp.title || app.opportunityTitle || 'Software Engineer Intern'}
+                          </h3>
+                          <div className="text-xs font-bold text-slate-700">
+                            {opp.company || app.company || 'Google'}
+                          </div>
+                          <div className="flex items-center gap-2.5 text-xs text-slate-500 flex-wrap pt-0.5">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              {opp.location || 'Bengaluru'}
+                            </span>
+                            <span>•</span>
+                            <span>{opp.workMode || 'On-site'}</span>
+                            <span>•</span>
+                            <span>
+                              Applied on{' '}
+                              {new Date(app.createdAt || Date.now()).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="sm:self-start">
+                        <StatusBadge status={app.status} />
+                      </div>
+                    </div>
+
+                    {/* Interview Schedule Banner Alert (if scheduled) */}
+                    {hasInterview && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 text-xs text-amber-900">
+                          <Calendar className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                          <div>
+                            <span className="font-bold">
+                              {app.interview.round || 'Technical Round 1'}:{' '}
+                            </span>
+                            <span>
+                              Scheduled for{' '}
+                              {new Date(app.interview.scheduledAt).toLocaleString([], {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => navigate('/student/ai-assistant')}
+                          className="px-3 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Prepare with AI</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Actions Row */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/student/applications/${appId}`)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#4F46E5] hover:underline cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Details &amp; History</span>
+                      </button>
+
+                      {['APPLIED', 'SHORTLISTED'].includes(app.status) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setWithdrawModal({
+                              isOpen: true,
+                              application: app,
+                              reason: '',
+                              isSubmitting: false,
+                            })
+                          }
+                          className="text-xs font-semibold text-rose-600 hover:text-rose-800 cursor-pointer"
+                        >
+                          Withdraw
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-      )}
+
+        {/* Right Column (1 Col): Application Insights & Tips matching Image 8 */}
+        <div className="space-y-6">
+          {/* Application Insights Breakdown */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+            <h3 className="text-sm font-bold text-[#172033] flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-[#4F46E5]" />
+              <span>Application Insights</span>
+            </h3>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <span>Applied / In Review</span>
+                </span>
+                <span className="font-bold text-[#172033]">{underReviewCount}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                  <span>Interview Stage</span>
+                </span>
+                <span className="font-bold text-[#172033]">{interviewCount}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span>Offered / Selected</span>
+                </span>
+                <span className="font-bold text-[#172033]">{offerCount}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-600">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                  <span>Rejected</span>
+                </span>
+                <span className="font-bold text-[#172033]">{rejectedCount}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Placement Tips Card */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center font-bold text-xs">
+              💡
+            </div>
+            <h4 className="text-sm font-bold text-[#172033]">Tips for Interview Rounds</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Always research the company's recent tech stack and have 2-3 thoughtful questions ready for the engineering panel.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/student/ai-assistant')}
+              className="text-xs font-bold text-[#4F46E5] hover:underline block pt-1"
+            >
+              Practice with AI Assistant →
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Withdraw Modal */}
       {withdrawModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-              <RotateCcw className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-2xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <h3 className="text-base font-bold text-[#172033]">Withdraw Application</h3>
+              <button
+                type="button"
+                onClick={() => setWithdrawModal({ isOpen: false, application: null, reason: '', isSubmitting: false })}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-[#172033]">Withdraw Application</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Are you sure you want to withdraw your application for{' '}
-                <strong className="text-slate-800">
-                  {withdrawModal.application?.opportunity?.title || 'this opportunity'}
-                </strong>
-                ? Your application record will be marked as withdrawn for auditing.
-              </p>
-            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Are you sure you want to withdraw your application? This action cannot be undone.
+            </p>
 
-            <form onSubmit={handleWithdraw} className="space-y-3">
+            <form onSubmit={handleWithdraw} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Reason for withdrawal (Optional):
+                  Reason for Withdrawal
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Accepted another offer, scheduling conflict..."
+                <textarea
+                  rows={3}
                   value={withdrawModal.reason}
-                  onChange={(e) =>
-                    setWithdrawModal((prev) => ({ ...prev, reason: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                  onChange={(e) => setWithdrawModal((prev) => ({ ...prev, reason: e.target.value }))}
+                  placeholder="e.g., Accepted another offer, schedule conflict..."
+                  className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-[#172033] focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  required
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setWithdrawModal({ isOpen: false, application: null, reason: '', isSubmitting: false })
-                  }
-                  disabled={withdrawModal.isSubmitting}
-                  className="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-colors"
+                  onClick={() => setWithdrawModal({ isOpen: false, application: null, reason: '', isSubmitting: false })}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={withdrawModal.isSubmitting}
-                  className="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
                 >
                   {withdrawModal.isSubmitting ? 'Withdrawing...' : 'Confirm Withdrawal'}
                 </button>

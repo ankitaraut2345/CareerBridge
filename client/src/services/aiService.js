@@ -34,10 +34,16 @@ export const getInterviewPreparation = (opportunityId) => {
   return api.get(`/ai/interview-preparation/${opportunityId}`);
 };
 
+// ── AI Career Assistant Chat ──────────────────────────────────────────
+export const chatCareerAssistant = (message) => {
+  return api.post('/ai/chat', { message }, { timeout: 20000 });
+};
+
 export default {
   analyzeResume,
   getResumeAnalysis,
   getStudentAnalyses,
   prepareInterview,
   getInterviewPreparation,
+  chatCareerAssistant,
 };

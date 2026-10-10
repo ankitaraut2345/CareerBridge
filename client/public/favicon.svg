@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" fill="none">
+  <defs>
+    <linearGradient id="cGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#4338CA" />
+    </linearGradient>
+    <linearGradient id="bridgeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+    <linearGradient id="bGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#9333EA" />
+    </linearGradient>
+  </defs>
+  <!-- Stylized C -->
+  <path d="M 40 18 C 24 18 12 30 12 46 C 12 62 24 74 40 74 C 47 74 53 71 58 66 L 49 57 C 46 60 43 62 40 62 C 30 62 24 55 24 46 C 24 37 30 30 40 30 C 43 30 47 32 50 35 L 59 26 C 54 21 47 18 40 18 Z" fill="url(#cGrad)" />
+  <!-- Bridge Connector Ribbon -->
+  <polygon points="36,55 58,26 68,26 46,55" fill="url(#bridgeGrad)" />
+  <!-- Stylized B -->
+  <path d="M 52 18 L 74 18 C 83 18 90 23 90 31 C 90 36 86 41 80 43 C 87 45 92 51 92 58 C 92 67 84 74 74 74 L 52 74 L 60 62 L 73 62 C 77 62 80 59 80 55 C 80 51 77 48 73 48 L 62 48 L 65 37 L 72 37 C 76 37 79 34 79 30 C 79 26 76 24 72 24 L 56 24 Z" fill="url(#bGrad)" />
+</svg>

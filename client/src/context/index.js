@@ -1,0 +1,3 @@
+// Context providers index (Authentication, Notification contexts)
+export { AuthProvider, useAuth } from './AuthContext';
+export { NotificationProvider, useNotifications } from './NotificationContext';

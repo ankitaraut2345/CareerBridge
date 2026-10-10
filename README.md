@@ -87,6 +87,9 @@ AI_MODEL=gemini-1.5-flash
 
 # Seed Data (Development only)
 DEMO_ACCOUNTS_PASSWORD=CareerBridgeDemo@2026
+
+# Instant Login / Quick Access Feature Flag (Default: false in production)
+ENABLE_DEMO_LOGIN=true
 ```
 
 ### Frontend (`client/.env`)
@@ -97,7 +100,29 @@ VITE_API_URL=http://localhost:5000/api
 
 # Optional: Dedicated Socket.IO URL (automatically defaults to VITE_API_URL without /api)
 VITE_SOCKET_URL=http://localhost:5000
+
+# Optional: Show Quick Access Demo Login buttons on the Login page (Default: false in production)
+VITE_ENABLE_DEMO_LOGIN=true
 ```
+
+---
+
+## ⚡ Instant Login (Quick Access)
+
+For evaluation and rapid role demonstrations, CareerBridge provides a secure 1-click **Quick Access** feature:
+
+- **Roles Supported:**
+  - `Continue as Student` → redirects to `/student`
+  - `Continue as Alumni` → redirects to `/alumni`
+  - `Continue as TPO` → redirects to `/tpo`
+  - `Continue as Admin` → redirects to `/admin`
+- **Security & Feature Flag:**
+  - Backend controlled via `ENABLE_DEMO_LOGIN` environment variable (defaults strictly to `false`).
+  - When disabled, backend returns `403 Forbidden` for any direct API calls to `/api/auth/demo-login`.
+  - Reuses the existing JWT issuance mechanism (`generateToken`), standard login payload (`{ token, user }`), and existing RBAC middleware without exposing secrets or credentials to the client.
+- **Endpoints:**
+  - `GET /api/auth/demo-login`: Returns status `{ success: true, enabled, roles }`
+  - `POST /api/auth/demo-login`: Accepts `{ role }`, verifies feature flag, and returns authenticated session token.
 
 ---
 

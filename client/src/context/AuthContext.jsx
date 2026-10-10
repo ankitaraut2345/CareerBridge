@@ -36,6 +36,17 @@ export const AuthProvider = ({ children }) => {
     setUser(loggedUser);
     const rolePath = loggedUser.role.toLowerCase();
     navigate(`/${rolePath}`, { replace: true });
+    return loggedUser;
+  };
+
+  const demoLogin = async (role) => {
+    const response = await api.post('/auth/demo-login', { role });
+    const { token, user: loggedUser } = response;
+    localStorage.setItem('careerbridge_token', token);
+    setUser(loggedUser);
+    const rolePath = loggedUser.role.toLowerCase();
+    navigate(`/${rolePath}`, { replace: true });
+    return loggedUser;
   };
 
   const logout = () => {
@@ -45,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     navigate('/login', { replace: true });
   };
 
-  const value = { user, loading, login, logout, isAuthenticated: !!user };
+  const value = { user, loading, login, demoLogin, logout, isAuthenticated: !!user };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

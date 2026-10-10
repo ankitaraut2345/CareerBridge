@@ -194,9 +194,113 @@ const logout = async (req, res) => {
   });
 };
 
+/**
+ * Role to demo account mapping
+ * Predefined canonical demo accounts for development and evaluation.
+ */
+const DEMO_ROLE_EMAIL_MAP = {
+  STUDENT: 'student@demo.com',
+  ALUMNI: 'alumni@demo.com',
+  TPO: 'tpo@demo.com',
+  ADMIN: 'admin@demo.com',
+};
+
+/**
+ * Check if demo login is enabled via environment variable
+ */
+const isDemoLoginEnabled = () => {
+  return process.env.ENABLE_DEMO_LOGIN === 'true';
+};
+
+/**
+ * Get Quick Login / Demo status
+ * GET /api/auth/demo-login
+ */
+const getDemoLoginStatus = async (req, res) => {
+  const enabled = isDemoLoginEnabled();
+  res.status(200).json({
+    success: true,
+    enabled,
+    roles: enabled ? Object.keys(DEMO_ROLE_EMAIL_MAP) : [],
+  });
+};
+
+/**
+ * Instant Login / Quick Access for demo evaluation
+ * POST /api/auth/demo-login
+ */
+const demoLogin = async (req, res, next) => {
+  try {
+    // 1. Verify feature flag is explicitly enabled
+    if (!isDemoLoginEnabled()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Quick Login is disabled. Please sign in with your email and password.',
+      });
+    }
+
+    const { role } = req.body;
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a role for Quick Login (STUDENT, ALUMNI, TPO, or ADMIN).',
+      });
+    }
+
+    const normalizedRole = String(role).toUpperCase().trim();
+    const targetEmail = DEMO_ROLE_EMAIL_MAP[normalizedRole];
+
+    if (!targetEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Quick Login is only available for STUDENT, ALUMNI, TPO, and ADMIN.',
+      });
+    }
+
+    // 2. Resolve predefined demo user
+    const user = await findUserByEmailWithPassword(targetEmail);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `Demo account for role ${normalizedRole} was not found. Please verify database seeding.`,
+      });
+    }
+
+    // 3. Check account activation
+    if (user.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'This demo account is deactivated. Please contact support.',
+      });
+    }
+
+    // 4. Generate real, valid JWT token using existing auth infrastructure
+    const token = generateToken(user);
+
+    const safeUser = {
+      id: user._id ? user._id.toString() : user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      verificationStatus: user.verificationStatus,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: `Quick Login successful as ${normalizedRole}.`,
+      token,
+      user: safeUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
   logout,
+  getDemoLoginStatus,
+  demoLogin,
 };

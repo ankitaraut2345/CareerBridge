@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "seed": "node seed/seeder.js",
     "test": "node test_phase16_security.js",
-    "test:security": "node test_phase16_security.js"
+    "test:security": "node test_phase16_security.js",
+    "test:instant-login": "node test_instant_login.js"
   },
   "keywords": [
     "careerbridge",

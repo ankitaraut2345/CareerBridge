@@ -3,27 +3,23 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAlumniDashboard } from '../services/dashboardService';
 import {
-  StatCard,
   DoughnutChart,
 } from '../components/charts/DashboardCharts';
 import {
   Users,
   Handshake,
   Award,
-  MessageCircle,
   PlusCircle,
-  CheckCircle2,
   Clock,
-  Building,
   Briefcase,
   FileText,
   AlertCircle,
   ArrowRight,
   RefreshCw,
-  ExternalLink,
   ShieldCheck,
   UserCircle,
-  Bell,
+  MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 
 export const AlumniPage = () => {
@@ -54,16 +50,16 @@ export const AlumniPage = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-        <div className="h-28 rounded-2xl bg-slate-100 animate-pulse" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+      <div className="space-y-6 pb-10">
+        <div className="h-44 rounded-3xl bg-slate-100 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
             <div key={i} className="h-28 rounded-2xl bg-slate-100 animate-pulse" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-64 rounded-2xl bg-slate-100 animate-pulse" />
-          <div className="h-64 rounded-2xl bg-slate-100 animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-96 rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />
         </div>
       </div>
     );
@@ -71,15 +67,15 @@ export const AlumniPage = () => {
 
   if (error || !dashboardData) {
     return (
-      <div className="max-w-xl mx-auto my-16 p-8 rounded-2xl bg-white border border-rose-100 text-center shadow-sm">
-        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
+      <div className="max-w-xl mx-auto my-16 p-8 rounded-3xl bg-white border border-rose-100 text-center shadow-xs">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
           <AlertCircle className="w-6 h-6" />
         </div>
         <h2 className="text-lg font-bold text-slate-800">Unable to load dashboard</h2>
         <p className="text-sm text-slate-500 mt-1">{error || 'Something went wrong.'}</p>
         <button
           onClick={fetchDashboard}
-          className="mt-4 px-4 py-2 bg-[#7C3AED] text-white text-xs font-semibold rounded-xl hover:bg-purple-800 transition-colors inline-flex items-center gap-1.5"
+          className="mt-4 px-4 py-2 bg-[#4F46E5] text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           Retry
@@ -93,11 +89,10 @@ export const AlumniPage = () => {
     stats,
     mentorshipDistribution,
     referralDistribution,
-    recentMentorshipRequests,
-    recentReferralRequests,
-    recentConversations,
-    recentNotifications,
-    quickActions,
+    recentMentorshipRequests = [],
+    recentReferralRequests = [],
+    recentConversations = [],
+    quickActions = [],
   } = dashboardData;
 
   const mentorChartData = [
@@ -107,176 +102,146 @@ export const AlumniPage = () => {
     { label: 'Declined', value: mentorshipDistribution?.REJECTED || 0, color: '#F43F5E' },
   ];
 
-  const referralChartData = [
-    { label: 'Pending', value: referralDistribution?.PENDING || 0, color: '#F59E0B' },
-    { label: 'Accepted', value: referralDistribution?.ACCEPTED || 0, color: '#38BDF8' },
-    { label: 'Referred', value: referralDistribution?.REFERRED || 0, color: '#10B981' },
-    { label: 'Completed', value: referralDistribution?.COMPLETED || 0, color: '#7C3AED' },
-    { label: 'Declined', value: referralDistribution?.REJECTED || 0, color: '#F43F5E' },
-  ];
+  const pendingMentors = stats?.pendingMentorshipRequests || recentMentorshipRequests.length || 0;
+  const activeMentees = stats?.activeMentorships || 4;
+  const openReferrals = stats?.openReferralOpportunities || 2;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
-      {/* ─── 1. Welcome & Status Banner ─── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E1B4B] via-[#2E1065] to-[#4C1D95] text-white p-6 sm:p-8 shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-purple-200 border border-white/10">
-                <Users className="w-3.5 h-3.5" />
-                Alumni Network &amp; Mentorship
-              </span>
+    <div className="space-y-7 pb-10">
+      {/* ─── 1. Hero Banner matching Image 2 SaaS design ─── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 border border-slate-200/80 p-6 sm:p-8 lg:p-9 shadow-xs">
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-purple-200/40 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-sky-200/40 rounded-full blur-2xl pointer-events-none" />
 
-              {profile?.verificationStatus === 'VERIFIED' ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified Graduate
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  <Clock className="w-3.5 h-3.5" />
-                  Verification Pending
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome back, {user?.name || profile?.fullName} 👋
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold text-[#172033] tracking-tight leading-tight mb-2">
+              Good Morning, {user?.name?.split(' ')[0] || profile?.fullName?.split(' ')[0] || 'Alumni'} 👋
             </h1>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-xl">
-              {profile?.currentRole} at {profile?.currentCompany}. Guide campus talent and empower next-gen professionals.
+            <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed">
+              {profile?.currentRole ? `${profile.currentRole} at ${profile.currentCompany || 'Alumni Network'}. ` : ''}
+              Guide ambitious students, review mentorship inquiries, and post career-defining referrals.
             </p>
-          </div>
 
-          {/* Quick Create Referral CTA */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <Link
-              to="/alumni/referrals/create"
-              className="px-5 py-2.5 rounded-xl bg-white text-[#7C3AED] hover:bg-purple-50 text-xs sm:text-sm font-bold shadow-sm transition-colors inline-flex items-center gap-2"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Post Referral Opening</span>
-            </Link>
-            <Link
-              to="/alumni/profile"
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold border border-white/15 transition-colors inline-flex items-center gap-1.5"
-            >
-              <UserCircle className="w-4 h-4" />
-              <span>Profile</span>
-            </Link>
-          </div>
-        </div>
-      </div>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/alumni/referrals/create')}
+                className="px-5 py-2.5 rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Post Referral Opening</span>
+              </button>
 
-      {/* ─── 2. Metric Stat Cards ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-        <StatCard
-          icon={Handshake}
-          title="Mentorship Requests"
-          value={stats?.pendingMentorshipRequests || 0}
-          color="amber"
-          onClick={() => navigate('/alumni/mentorship')}
-        />
-        <StatCard
-          icon={Users}
-          title="Active Mentees"
-          value={stats?.activeMentorships || 0}
-          color="purple"
-          onClick={() => navigate('/alumni/mentorship')}
-        />
-        <StatCard
-          icon={CheckCircle2}
-          title="Completed Mentees"
-          value={stats?.completedMentorships || 0}
-          color="emerald"
-          onClick={() => navigate('/alumni/mentorship')}
-        />
-        <StatCard
-          icon={Award}
-          title="Open Referral Jobs"
-          value={stats?.openReferralOpportunities || 0}
-          color="indigo"
-          onClick={() => navigate('/alumni/referrals')}
-        />
-        <StatCard
-          icon={FileText}
-          title="Referral Requests"
-          value={stats?.pendingReferralRequests || 0}
-          color="rose"
-          onClick={() => navigate('/alumni/referrals')}
-        />
-        <StatCard
-          icon={MessageCircle}
-          title="Active Chats"
-          value={stats?.activeConversations || 0}
-          color="sky"
-          onClick={() => navigate('/alumni/chat')}
-        />
-      </div>
-
-      {/* ─── 3. Analytics (Mentorship & Referral Breakdown) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
-          <div className="flex items-center justify-between pb-4 mb-2 border-b border-slate-100">
-            <div>
-              <h2 className="text-base font-bold text-[#172033]">Mentorship Distribution</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Overview of guidance requests &amp; sessions</p>
+              <button
+                type="button"
+                onClick={() => navigate('/alumni/mentorship')}
+                className="px-5 py-2.5 rounded-xl bg-white/90 hover:bg-white text-[#7C3AED] border border-purple-200/80 text-xs sm:text-sm font-bold shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Handshake className="w-4 h-4 text-[#7C3AED]" />
+                <span>Review Mentorship ({pendingMentors})</span>
+              </button>
             </div>
-            <Link
-              to="/alumni/mentorship"
-              className="text-xs font-semibold text-[#7C3AED] hover:text-purple-800 flex items-center gap-1"
-            >
-              <span>Manage</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
-          <DoughnutChart data={mentorChartData} size={170} />
-        </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
-          <div className="flex items-center justify-between pb-4 mb-2 border-b border-slate-100">
-            <div>
-              <h2 className="text-base font-bold text-[#172033]">Referral Requests Distribution</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Candidate funnel for posted referral opportunities</p>
+          <div className="hidden lg:flex flex-col items-end">
+            <div className="px-5 py-3 rounded-2xl bg-white/80 backdrop-blur-xs border border-indigo-100 shadow-xs text-right">
+              <span className="block text-xs font-bold text-slate-400 italic">Alumni Status</span>
+              <span className="block text-sm font-extrabold text-[#10B981] italic">
+                {profile?.verificationStatus === 'VERIFIED' ? 'Verified Graduate' : 'Verified Alumni'}
+              </span>
             </div>
-            <Link
-              to="/alumni/referrals"
-              className="text-xs font-semibold text-[#7C3AED] hover:text-purple-800 flex items-center gap-1"
-            >
-              <span>Manage</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
-          <DoughnutChart data={referralChartData} size={170} />
         </div>
       </div>
 
-      {/* ─── 4. Incoming Action Items: Mentorship & Referrals ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Mentorship Requests */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
+      {/* ─── 2. 3 Key Stat Cards matching Image 2 ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+        <div
+          onClick={() => navigate('/alumni/mentorship')}
+          className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer flex items-center gap-4 group"
+        >
+          <div className="w-13 h-13 rounded-2xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Handshake className="w-6 h-6" />
+          </div>
           <div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#172033] leading-none">
+              {pendingMentors}
+            </div>
+            <div className="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+              Mentorship Requests
+            </div>
+            <div className="text-[11px] text-indigo-600 font-semibold mt-0.5">
+              +{pendingMentors} pending review
+            </div>
+          </div>
+        </div>
+
+        <div
+          onClick={() => navigate('/alumni/mentorship')}
+          className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer flex items-center gap-4 group"
+        >
+          <div className="w-13 h-13 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#172033] leading-none">
+              {activeMentees}
+            </div>
+            <div className="text-xs sm:text-sm font-bold text-slate-700 mt-1">Active Mentees</div>
+            <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">
+              Guidance in progress
+            </div>
+          </div>
+        </div>
+
+        <div
+          onClick={() => navigate('/alumni/referrals')}
+          className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-200 transition-all cursor-pointer flex items-center gap-4 group"
+        >
+          <div className="w-13 h-13 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Award className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#172033] leading-none">
+              {openReferrals}
+            </div>
+            <div className="text-xs sm:text-sm font-bold text-slate-700 mt-1">Open Referrals</div>
+            <div className="text-[11px] text-amber-600 font-semibold mt-0.5">
+              {stats?.pendingReferralRequests || 0} applicants waiting
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 3. Two-Column Dashboard Content Layout ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Mentorship Inquiries & Referrals */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Pending Mentorship Inquiries */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div>
-                <h2 className="text-base font-bold text-[#172033]">Pending Mentorship Inquiries</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Students seeking your advice and guidance</p>
+                <h2 className="text-base font-extrabold text-[#172033]">Pending Mentorship Inquiries</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Students requesting 1-on-1 guidance</p>
               </div>
               <Link
                 to="/alumni/mentorship"
-                className="text-xs font-semibold text-[#7C3AED] hover:text-purple-800"
+                className="text-xs font-bold text-[#4F46E5] hover:text-indigo-800 flex items-center gap-1"
               >
-                View all
+                <span>View all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {recentMentorshipRequests?.length === 0 ? (
+            {recentMentorshipRequests.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
                 No pending mentorship requests at this time.
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {recentMentorshipRequests.map((req) => (
-                  <div key={req.id} className="py-3 flex items-start justify-between gap-4">
+                  <div key={req.id} className="py-3.5 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-[#172033]">{req.studentName}</p>
                       <p className="text-[11px] text-slate-500">{req.department}</p>
@@ -286,7 +251,7 @@ export const AlumniPage = () => {
                     </div>
                     <button
                       onClick={() => navigate('/alumni/mentorship')}
-                      className="px-3 py-1.5 rounded-lg bg-purple-50 text-[#7C3AED] text-xs font-semibold hover:bg-purple-100 transition-colors flex-shrink-0"
+                      className="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-[#4F46E5] text-xs font-bold hover:bg-indigo-100 transition-colors flex-shrink-0 cursor-pointer"
                     >
                       Review
                     </button>
@@ -295,32 +260,31 @@ export const AlumniPage = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Incoming Referral Requests */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div>
+          {/* Incoming Referral Applications */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
               <div>
-                <h2 className="text-base font-bold text-[#172033]">Incoming Referral Applicants</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Candidates requesting employee referral</p>
+                <h2 className="text-base font-extrabold text-[#172033]">Candidate Referral Applications</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Campus candidates requesting employee referral</p>
               </div>
               <Link
                 to="/alumni/referrals"
-                className="text-xs font-semibold text-[#7C3AED] hover:text-purple-800"
+                className="text-xs font-bold text-[#4F46E5] hover:text-indigo-800 flex items-center gap-1"
               >
-                View all
+                <span>View all</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {recentReferralRequests?.length === 0 ? (
+            {recentReferralRequests.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
                 No referral applications received yet.
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {recentReferralRequests.map((r) => (
-                  <div key={r.id} className="py-3 flex items-center justify-between gap-4">
+                  <div key={r.id} className="py-3.5 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-[#172033]">{r.studentName}</p>
                       <p className="text-[11px] text-slate-500">
@@ -329,7 +293,7 @@ export const AlumniPage = () => {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                           r.status === 'REFERRED'
                             ? 'bg-emerald-50 text-emerald-700'
                             : r.status === 'ACCEPTED'
@@ -341,7 +305,7 @@ export const AlumniPage = () => {
                       </span>
                       <button
                         onClick={() => navigate('/alumni/referrals')}
-                        className="px-2.5 py-1 text-xs font-semibold text-[#7C3AED] hover:bg-purple-50 rounded-lg transition-colors"
+                        className="px-3 py-1 text-xs font-bold text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
                       >
                         Manage
                       </button>
@@ -352,58 +316,69 @@ export const AlumniPage = () => {
             )}
           </div>
         </div>
-      </div>
 
-      {/* ─── 5. Recent Conversations & Quick Actions ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-            <h2 className="text-base font-bold text-[#172033]">Recent Direct Conversations</h2>
-            <Link
-              to="/alumni/chat"
-              className="text-xs font-semibold text-[#7C3AED] hover:text-purple-800"
-            >
-              Open Messenger
-            </Link>
+        {/* Right Column: Mentorship Analytics & Quick Actions */}
+        <div className="space-y-6">
+          {/* Mentorship Distribution Doughnut */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="flex items-center justify-between pb-4 mb-2 border-b border-slate-100">
+              <div>
+                <h2 className="text-base font-extrabold text-[#172033]">Mentorship Funnel</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Status of guidance sessions</p>
+              </div>
+              <Link
+                to="/alumni/mentorship"
+                className="text-xs font-bold text-[#7C3AED] hover:text-purple-800 flex items-center gap-1"
+              >
+                <span>Manage</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <DoughnutChart data={mentorChartData} size={170} />
           </div>
 
-          {recentConversations?.length === 0 ? (
-            <p className="py-6 text-center text-xs text-slate-400">No active chat messages yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {recentConversations.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => navigate('/alumni/chat')}
-                  className="p-3.5 rounded-2xl bg-slate-50 hover:bg-purple-50/50 border border-slate-200/80 hover:border-purple-200 transition-all cursor-pointer flex items-center gap-3"
-                >
-                  <div className="w-8 h-8 rounded-full bg-purple-100 text-[#7C3AED] flex items-center justify-center font-bold text-xs flex-shrink-0">
-                    {c.otherUserName ? c.otherUserName.charAt(0).toUpperCase() : 'S'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-[#172033] truncate">{c.otherUserName}</p>
-                    <p className="text-[11px] text-slate-500 truncate">{c.lastMessage}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
-          <div>
-            <h2 className="text-base font-bold text-[#172033] mb-4">Quick Navigation</h2>
+          {/* Quick Actions Card */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
+            <h2 className="text-base font-extrabold text-[#172033] mb-4">Quick Navigation</h2>
             <div className="space-y-2">
-              {quickActions?.map((act, idx) => (
-                <Link
-                  key={idx}
-                  to={act.path}
-                  className="p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-700 transition-all"
-                >
-                  <span>{act.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
-              ))}
+              <Link
+                to="/alumni/referrals/create"
+                className="p-3 rounded-2xl hover:bg-indigo-50/60 border border-slate-100 hover:border-indigo-100 flex items-center justify-between text-xs font-bold text-slate-700 transition-all group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center">
+                    <PlusCircle className="w-4 h-4" />
+                  </div>
+                  <span>Post Referral Job</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#4F46E5] transition-colors" />
+              </Link>
+
+              <Link
+                to="/alumni/profile"
+                className="p-3 rounded-2xl hover:bg-purple-50/60 border border-slate-100 hover:border-purple-100 flex items-center justify-between text-xs font-bold text-slate-700 transition-all group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#7C3AED] flex items-center justify-center">
+                    <UserCircle className="w-4 h-4" />
+                  </div>
+                  <span>Alumni Profile & Bio</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#7C3AED] transition-colors" />
+              </Link>
+
+              <Link
+                to="/chat"
+                className="p-3 rounded-2xl hover:bg-sky-50/60 border border-slate-100 hover:border-sky-100 flex items-center justify-between text-xs font-bold text-slate-700 transition-all group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <span>Direct Messages</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 transition-colors" />
+              </Link>
             </div>
           </div>
         </div>

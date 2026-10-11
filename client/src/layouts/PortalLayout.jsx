@@ -26,6 +26,8 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const PortalLayout = () => {
@@ -42,115 +44,381 @@ export const PortalLayout = () => {
   const role = user?.role || 'STUDENT';
   const rolePath = role.toLowerCase();
 
-  // Navigation Items matching the exact sidebar in all mockups
-  const navSections = [
-    {
-      title: null,
-      items: [
-        {
-          name: 'Dashboard',
-          path: `/${rolePath}`,
-          icon: Home,
-          exact: true,
-        },
-      ],
-    },
-    {
-      title: 'OPPORTUNITIES',
-      items: [
-        {
-          name: 'Opportunities',
-          path: role === 'STUDENT' ? '/student/opportunities' : '/opportunities',
-          icon: Briefcase,
-        },
-        {
-          name: 'My Applications',
-          path: role === 'STUDENT' ? '/student/applications' : '/student/applications',
-          icon: FileText,
-          hidden: role !== 'STUDENT',
-        },
-        {
-          name: 'Saved Opportunities',
-          path: '/student/saved-opportunities',
-          icon: Bookmark,
-          hidden: role !== 'STUDENT',
-        },
-      ].filter((i) => !i.hidden),
-    },
-    {
-      title: 'CAREER GROWTH',
-      items: [
-        {
-          name: 'AI Assistant',
-          path: '/student/ai-assistant',
-          icon: Sparkles,
-          badge: 'NEW',
-          badgeColor: 'bg-[#7C3AED] text-white',
-        },
-        {
-          name: 'Alumni Network',
-          path: '/student/mentors',
-          icon: Users,
-        },
-        {
-          name: 'Mentorship',
-          path: role === 'ALUMNI' ? '/alumni/mentorship' : '/student/mentorship',
-          icon: GraduationCap,
-        },
-        {
-          name: 'Referrals',
-          path: role === 'ALUMNI' ? '/alumni/referrals' : '/student/referrals',
-          icon: LinkIcon,
-        },
-        {
-          name: 'Career Roadmap',
-          path: '/student/roadmap',
-          icon: BarChart2,
-        },
-      ],
-    },
-    {
-      title: 'COMMUNICATION',
-      items: [
-        {
-          name: 'Messages',
-          path: '/chat',
-          icon: MessageSquare,
-        },
-        {
-          name: 'Notifications',
-          path: '/notifications',
-          icon: Bell,
-          dot: unreadCount > 0,
-        },
-      ],
-    },
-    {
-      title: 'ACCOUNT',
-      items: [
-        {
-          name: 'My Profile',
-          path: role === 'ALUMNI' ? '/alumni/profile' : '/student/profile',
-          icon: User,
-        },
-        {
-          name: 'Settings',
-          path: '/settings',
-          icon: Settings,
-        },
-        {
-          name: 'Help & Support',
-          path: '/help',
-          icon: HelpCircle,
-        },
-      ],
-    },
-  ];
+  // Navigation Items customized per module for Students, Alumni, TPOs, and Admins
+  const getNavSections = () => {
+    switch (role) {
+      case 'ALUMNI':
+        return [
+          {
+            title: null,
+            items: [
+              {
+                name: 'Dashboard',
+                path: '/alumni',
+                icon: Home,
+                exact: true,
+              },
+            ],
+          },
+          {
+            title: 'MENTORSHIP & REFERRALS',
+            items: [
+              {
+                name: 'Mentorship Requests',
+                path: '/alumni/mentorship',
+                icon: GraduationCap,
+              },
+              {
+                name: 'Post Referral Opening',
+                path: '/alumni/referrals/create',
+                icon: Briefcase,
+                badge: 'NEW',
+                badgeColor: 'bg-[#7C3AED] text-white',
+              },
+              {
+                name: 'My Referrals',
+                path: '/alumni/referrals',
+                icon: LinkIcon,
+              },
+            ],
+          },
+          {
+            title: 'OPPORTUNITIES & NETWORK',
+            items: [
+              {
+                name: 'Explore Opportunities',
+                path: '/opportunities',
+                icon: Briefcase,
+              },
+              {
+                name: 'Alumni Directory',
+                path: '/student/mentors',
+                icon: Users,
+              },
+              {
+                name: 'AI Assistant',
+                path: '/student/ai-assistant',
+                icon: Sparkles,
+              },
+            ],
+          },
+          {
+            title: 'COMMUNICATION',
+            items: [
+              {
+                name: 'Messages',
+                path: '/chat',
+                icon: MessageSquare,
+              },
+              {
+                name: 'Notifications',
+                path: '/notifications',
+                icon: Bell,
+                dot: unreadCount > 0,
+              },
+            ],
+          },
+          {
+            title: 'ACCOUNT',
+            items: [
+              {
+                name: 'My Profile',
+                path: '/alumni/profile',
+                icon: User,
+              },
+              {
+                name: 'Settings',
+                path: '/settings',
+                icon: Settings,
+              },
+              {
+                name: 'Help & Support',
+                path: '/help',
+                icon: HelpCircle,
+              },
+            ],
+          },
+        ];
+
+      case 'TPO':
+        return [
+          {
+            title: null,
+            items: [
+              {
+                name: 'Dashboard',
+                path: '/tpo',
+                icon: Home,
+                exact: true,
+              },
+            ],
+          },
+          {
+            title: 'PLACEMENT OPERATIONS',
+            items: [
+              {
+                name: 'Placement Drives',
+                path: '/tpo/opportunities',
+                icon: Briefcase,
+              },
+              {
+                name: 'Create Opportunity',
+                path: '/tpo/opportunities/create',
+                icon: Building2,
+                badge: 'POST',
+                badgeColor: 'bg-[#0284C7] text-white',
+              },
+            ],
+          },
+          {
+            title: 'CAMPUS TALENT',
+            items: [
+              {
+                name: 'Alumni & Mentors',
+                path: '/student/mentors',
+                icon: Users,
+              },
+              {
+                name: 'Career Roadmap',
+                path: '/student/roadmap',
+                icon: BarChart2,
+              },
+              {
+                name: 'Browse Opportunities',
+                path: '/opportunities',
+                icon: Briefcase,
+              },
+            ],
+          },
+          {
+            title: 'COMMUNICATION',
+            items: [
+              {
+                name: 'Messages',
+                path: '/chat',
+                icon: MessageSquare,
+              },
+              {
+                name: 'Notifications',
+                path: '/notifications',
+                icon: Bell,
+                dot: unreadCount > 0,
+              },
+            ],
+          },
+          {
+            title: 'ACCOUNT',
+            items: [
+              {
+                name: 'Settings',
+                path: '/settings',
+                icon: Settings,
+              },
+              {
+                name: 'Help & Support',
+                path: '/help',
+                icon: HelpCircle,
+              },
+            ],
+          },
+        ];
+
+      case 'ADMIN':
+        return [
+          {
+            title: null,
+            items: [
+              {
+                name: 'Dashboard',
+                path: '/admin',
+                icon: Home,
+                exact: true,
+              },
+            ],
+          },
+          {
+            title: 'INSTITUTIONAL GOVERNANCE',
+            items: [
+              {
+                name: 'Alumni Verification',
+                path: '/admin/alumni-verification',
+                icon: ShieldCheck,
+                badge: 'AUDIT',
+                badgeColor: 'bg-[#4F46E5] text-white',
+              },
+              {
+                name: 'Placement Oversight',
+                path: '/tpo/opportunities',
+                icon: Briefcase,
+              },
+            ],
+          },
+          {
+            title: 'CAMPUS DIRECTORY',
+            items: [
+              {
+                name: 'Alumni & Mentors',
+                path: '/student/mentors',
+                icon: Users,
+              },
+              {
+                name: 'All Opportunities',
+                path: '/opportunities',
+                icon: Briefcase,
+              },
+            ],
+          },
+          {
+            title: 'COMMUNICATION',
+            items: [
+              {
+                name: 'Messages',
+                path: '/chat',
+                icon: MessageSquare,
+              },
+              {
+                name: 'Notifications',
+                path: '/notifications',
+                icon: Bell,
+                dot: unreadCount > 0,
+              },
+            ],
+          },
+          {
+            title: 'ACCOUNT',
+            items: [
+              {
+                name: 'Settings',
+                path: '/settings',
+                icon: Settings,
+              },
+              {
+                name: 'Help & Support',
+                path: '/help',
+                icon: HelpCircle,
+              },
+            ],
+          },
+        ];
+
+      case 'STUDENT':
+      default:
+        return [
+          {
+            title: null,
+            items: [
+              {
+                name: 'Dashboard',
+                path: '/student',
+                icon: Home,
+                exact: true,
+              },
+            ],
+          },
+          {
+            title: 'OPPORTUNITIES',
+            items: [
+              {
+                name: 'Opportunities',
+                path: '/student/opportunities',
+                icon: Briefcase,
+              },
+              {
+                name: 'My Applications',
+                path: '/student/applications',
+                icon: FileText,
+              },
+              {
+                name: 'Saved Opportunities',
+                path: '/student/saved-opportunities',
+                icon: Bookmark,
+              },
+            ],
+          },
+          {
+            title: 'CAREER GROWTH',
+            items: [
+              {
+                name: 'AI Assistant',
+                path: '/student/ai-assistant',
+                icon: Sparkles,
+                badge: 'NEW',
+                badgeColor: 'bg-[#7C3AED] text-white',
+              },
+              {
+                name: 'Alumni Network',
+                path: '/student/mentors',
+                icon: Users,
+              },
+              {
+                name: 'Mentorship',
+                path: '/student/mentorship',
+                icon: GraduationCap,
+              },
+              {
+                name: 'Referrals',
+                path: '/student/referrals',
+                icon: LinkIcon,
+              },
+              {
+                name: 'Career Roadmap',
+                path: '/student/roadmap',
+                icon: BarChart2,
+              },
+            ],
+          },
+          {
+            title: 'COMMUNICATION',
+            items: [
+              {
+                name: 'Messages',
+                path: '/chat',
+                icon: MessageSquare,
+              },
+              {
+                name: 'Notifications',
+                path: '/notifications',
+                icon: Bell,
+                dot: unreadCount > 0,
+              },
+            ],
+          },
+          {
+            title: 'ACCOUNT',
+            items: [
+              {
+                name: 'My Profile',
+                path: '/student/profile',
+                icon: User,
+              },
+              {
+                name: 'Settings',
+                path: '/settings',
+                icon: Settings,
+              },
+              {
+                name: 'Help & Support',
+                path: '/help',
+                icon: HelpCircle,
+              },
+            ],
+          },
+        ];
+    }
+  };
+
+  const navSections = getNavSections();
 
   const handleGlobalSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/student/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
+      if (role === 'TPO') {
+        navigate(`/tpo/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
+      } else if (role === 'STUDENT') {
+        navigate(`/student/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
+      } else {
+        navigate(`/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
+      }
     }
   };
 
@@ -253,7 +521,7 @@ export const PortalLayout = () => {
         {/* User Mini Profile Card at Bottom */}
         <div className="p-3 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
           <Link
-            to={role === 'ALUMNI' ? '/alumni/profile' : '/student/profile'}
+            to={role === 'ALUMNI' ? '/alumni/profile' : role === 'STUDENT' ? '/student/profile' : '/settings'}
             className="flex items-center gap-3 p-2 rounded-xl hover:bg-white hover:shadow-xs border border-transparent hover:border-slate-200 transition-all group"
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#4F46E5] to-[#7C3AED] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs">
@@ -429,7 +697,7 @@ export const PortalLayout = () => {
                   </div>
 
                   <Link
-                    to={role === 'ALUMNI' ? '/alumni/profile' : '/student/profile'}
+                    to={role === 'ALUMNI' ? '/alumni/profile' : role === 'STUDENT' ? '/student/profile' : '/settings'}
                     className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                   >
                     <User className="w-4 h-4 text-slate-400" />

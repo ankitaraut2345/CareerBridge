@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import PortalLayout from '../layouts/PortalLayout';
 import LandingPage from '../pages/LandingPage';
+import RootRedirect from '../components/RootRedirect';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import StudentPage from '../pages/StudentPage';
@@ -109,7 +110,8 @@ export const AppRoutes = () => {
 
       {/* ─── 2. Public / Guest Routes with MainLayout (Navbar + Hero + Footer) ─── */}
       <Route path="/" element={<MainLayout />}>
-        <Route index element={<LandingPage />} />
+        <Route index element={<RootRedirect />} />
+        <Route path="landing" element={<LandingPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />

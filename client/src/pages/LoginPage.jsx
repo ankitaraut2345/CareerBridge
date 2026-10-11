@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Backpack,
   GraduationCap,
@@ -58,8 +58,16 @@ const QUICK_ROLES = [
 ];
 
 export const LoginPage = () => {
-  const { login, demoLogin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, login, demoLogin, loading: authLoading } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
+
+  // Auto-redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user?.role) {
+      navigate(`/${user.role.toLowerCase()}`, { replace: true });
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [quickLoginRole, setQuickLoginRole] = useState(null);

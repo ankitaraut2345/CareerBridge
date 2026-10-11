@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import SectionHeading from '../components/SectionHeading';
 import { checkHealth } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import {
   Briefcase,
   Users,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export const LandingPage = () => {
+  const { user, isAuthenticated } = useAuth();
   // Live backend API health check verification state
   const [apiStatus, setApiStatus] = useState({
     checked: false,
@@ -177,26 +179,64 @@ export const LandingPage = () => {
               internships, mentorship, referrals, and AI-assisted career preparation.
             </p>
 
+            {/* Authenticated user status indicator */}
+            {isAuthenticated && user && (
+              <div className="mt-6 mb-2 inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200/80 text-xs font-bold text-[#4F46E5] shadow-2xs">
+                <span>Signed in as <strong>{user.name}</strong> ({user.role})</span>
+                <span className="text-slate-300">|</span>
+                <Link to={`/${user.role.toLowerCase()}`} className="underline hover:text-indigo-800 flex items-center gap-1">
+                  <span>Go to Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
+
             {/* Call to Actions */}
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                to="/student"
-                variant="primary"
-                size="lg"
-                icon={Briefcase}
-                className="w-full sm:w-auto shadow-md hover:shadow-lg"
-              >
-                Explore Opportunities
-              </Button>
-              <Button
-                to="/alumni"
-                variant="outline"
-                size="lg"
-                icon={Users}
-                className="w-full sm:w-auto"
-              >
-                Connect with Alumni
-              </Button>
+              {isAuthenticated && user ? (
+                <>
+                  <Button
+                    to={`/${user.role.toLowerCase()}`}
+                    variant="primary"
+                    size="lg"
+                    icon={ArrowRight}
+                    iconPosition="right"
+                    className="w-full sm:w-auto shadow-md hover:shadow-lg"
+                  >
+                    Open {user.role} Dashboard
+                  </Button>
+                  <Button
+                    to="/opportunities"
+                    variant="outline"
+                    size="lg"
+                    icon={Briefcase}
+                    className="w-full sm:w-auto"
+                  >
+                    Explore Opportunities
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    to="/student"
+                    variant="primary"
+                    size="lg"
+                    icon={Briefcase}
+                    className="w-full sm:w-auto shadow-md hover:shadow-lg"
+                  >
+                    Explore Opportunities
+                  </Button>
+                  <Button
+                    to="/alumni"
+                    variant="outline"
+                    size="lg"
+                    icon={Users}
+                    className="w-full sm:w-auto"
+                  >
+                    Connect with Alumni
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* API Health Connection Badge */}

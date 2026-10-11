@@ -21,29 +21,23 @@ export const Navbar = () => {
   };
 
   const navLinks = [
+    { name: 'Home', path: '/' },
     ...(isAuthenticated && user?.role
       ? [{ name: 'Dashboard', path: `/${user.role.toLowerCase()}` }]
-      : [{ name: 'Home', path: '/' }]),
+      : []),
     { name: 'Opportunities', path: getOpportunitiesPath() },
     ...(user?.role === 'STUDENT'
       ? [
           { name: 'Applications', path: '/student/applications' },
           { name: 'Referrals', path: '/student/referrals' },
-          { name: 'Find Mentors', path: '/student/mentors' },
-          { name: 'Mentorship', path: '/student/mentorship' },
-          { name: 'Messages', path: '/student/chat' },
+          { name: 'Mentors', path: '/student/mentors' },
+        ]
+      : user?.role === 'ALUMNI'
+      ? [
+          { name: 'Referrals', path: '/alumni/referrals' },
+          { name: 'Mentorship', path: '/alumni/mentorship' },
         ]
       : []),
-    ...(user?.role === 'ALUMNI'
-      ? [
-          { name: 'Referrals Hub', path: '/alumni/referrals' },
-          { name: 'Mentorship Hub', path: '/alumni/mentorship' },
-          { name: 'Messages', path: '/alumni/chat' },
-          { name: 'Alumni Network', path: '/alumni' },
-        ]
-      : user?.role === 'STUDENT'
-      ? []
-      : [{ name: 'Alumni Network', path: '/alumni' }]),
     { name: 'TPO Portal', path: '/tpo' },
   ];
 

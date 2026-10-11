@@ -110,7 +110,7 @@ export const AppRoutes = () => {
 
       {/* ─── 2. Public / Guest Routes with MainLayout (Navbar + Hero + Footer) ─── */}
       <Route path="/" element={<MainLayout />}>
-        <Route index element={<RootRedirect />} />
+        <Route index element={<LandingPage />} />
         <Route path="landing" element={<LandingPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

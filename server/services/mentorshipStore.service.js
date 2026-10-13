@@ -137,8 +137,10 @@ const sanitizeMentorPublicProfile = (alumniProfile) => {
   return {
     id: alumniProfile.userId || alumniProfile._id,
     userId: alumniProfile.userId || alumniProfile._id,
+    name: alumniProfile.fullName,
     fullName: alumniProfile.fullName,
     profilePhoto: alumniProfile.profilePhoto || null,
+    company: alumniProfile.currentCompany || 'Not Specified',
     currentCompany: alumniProfile.currentCompany || 'Not Specified',
     currentRole: alumniProfile.currentRole || 'Alumnus',
     industry: alumniProfile.industry || 'Technology',
@@ -146,6 +148,7 @@ const sanitizeMentorPublicProfile = (alumniProfile) => {
     graduationYear: alumniProfile.graduationYear,
     department: alumniProfile.department,
     college: alumniProfile.college,
+    location: alumniProfile.location || 'India',
     bio: alumniProfile.bio || '',
     skills: alumniProfile.skills || [],
     careerInterests: alumniProfile.careerInterests || [],
@@ -195,6 +198,9 @@ const discoverMentors = async ({
   company = '',
   industry = '',
   department = '',
+  location = '',
+  graduationYear = '',
+  availability = '',
   area = '',
   skill = '',
   minExp = '',
@@ -206,7 +212,7 @@ const discoverMentors = async ({
     studentProfile = await findStudentProfile(studentUserId);
   }
 
-  // Filter verified mentors
+  // Map verified mentors with match scores
   let list = verifiedMentors.map((p) => {
     const publicProfile = sanitizeMentorPublicProfile(p);
     const match = calculateMentorMatch(studentProfile, p);
@@ -218,19 +224,29 @@ const discoverMentors = async ({
     };
   });
 
-  // Apply Search
+  // Apply Search (across name, company, role, department, location, industry, graduation year, bio, skills, guidance areas)
   if (search.trim()) {
     const q = search.toLowerCase().trim();
     list = list.filter((m) => {
       const name = (m.fullName || '').toLowerCase();
       const comp = (m.currentCompany || '').toLowerCase();
       const role = (m.currentRole || '').toLowerCase();
+      const dept = (m.department || '').toLowerCase();
+      const loc = (m.location || '').toLowerCase();
+      const ind = (m.industry || '').toLowerCase();
+      const gradYear = String(m.graduationYear || '');
+      const bio = (m.bio || '').toLowerCase();
       const skills = (m.skills || []).map((s) => s.toLowerCase());
       const areas = (m.mentorshipAreas || []).map((a) => a.toLowerCase());
       return (
         name.includes(q) ||
         comp.includes(q) ||
         role.includes(q) ||
+        dept.includes(q) ||
+        loc.includes(q) ||
+        ind.includes(q) ||
+        gradYear.includes(q) ||
+        bio.includes(q) ||
         skills.some((s) => s.includes(q)) ||
         areas.some((a) => a.includes(q))
       );
@@ -255,7 +271,19 @@ const discoverMentors = async ({
     list = list.filter((m) => (m.department || '').toLowerCase().includes(deptQ));
   }
 
-  // Filter: Mentorship Area
+  // Filter: Location
+  if (location.trim()) {
+    const locQ = location.toLowerCase().trim();
+    list = list.filter((m) => (m.location || '').toLowerCase().includes(locQ));
+  }
+
+  // Filter: Graduation Year
+  if (graduationYear && String(graduationYear).trim()) {
+    const yrStr = String(graduationYear).trim();
+    list = list.filter((m) => String(m.graduationYear || '') === yrStr);
+  }
+
+  // Filter: Mentorship Area / Guidance
   if (area.trim()) {
     const areaQ = area.toLowerCase().trim();
     list = list.filter((m) =>
@@ -277,11 +305,23 @@ const discoverMentors = async ({
     list = list.filter((m) => (m.yearsOfExperience || 0) >= min);
   }
 
+  // Filter: Mentorship Availability
+  if (availability && availability.trim() && availability !== 'all') {
+    const availStr = availability.toLowerCase().trim();
+    if (availStr === 'available' || availStr === 'true') {
+      list = list.filter((m) => m.mentorshipAvailable === true);
+    } else if (availStr === 'unavailable' || availStr === 'false') {
+      list = list.filter((m) => m.mentorshipAvailable === false);
+    }
+  }
+
   // Sorting
   if (sort === 'experience') {
     list.sort((a, b) => (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0));
   } else if (sort === 'recent') {
     list.sort((a, b) => (b.graduationYear || 0) - (a.graduationYear || 0));
+  } else if (sort === 'name') {
+    list.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
   } else {
     // Default: 'recommended' by profile matchScore
     list.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));

@@ -87,7 +87,7 @@ export const PortalLayout = () => {
             items: [
               {
                 name: 'Explore Opportunities',
-                path: '/opportunities',
+                path: '/student/opportunities',
                 icon: Briefcase,
               },
               {
@@ -185,7 +185,7 @@ export const PortalLayout = () => {
               },
               {
                 name: 'Browse Opportunities',
-                path: '/opportunities',
+                path: '/tpo/opportunities',
                 icon: Briefcase,
               },
             ],
@@ -263,7 +263,7 @@ export const PortalLayout = () => {
               },
               {
                 name: 'All Opportunities',
-                path: '/opportunities',
+                path: '/tpo/opportunities',
                 icon: Briefcase,
               },
             ],
@@ -417,7 +417,7 @@ export const PortalLayout = () => {
       } else if (role === 'STUDENT') {
         navigate(`/student/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
       } else {
-        navigate(`/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
+        navigate(`/student/opportunities?search=${encodeURIComponent(searchQuery.trim())}`);
       }
     }
   };
@@ -440,10 +440,10 @@ export const PortalLayout = () => {
         {/* Brand Logo Header */}
         <div className="h-20 flex items-center justify-between px-5 border-b border-slate-100 flex-shrink-0">
           {!sidebarCollapsed ? (
-            <BrandLogo size="default" />
+            <BrandLogo size="default" to={`/${rolePath}`} />
           ) : (
             <div className="mx-auto">
-              <BrandLogo size="sm" />
+              <BrandLogo size="sm" to={`/${rolePath}`} />
             </div>
           )}
 
@@ -555,7 +555,7 @@ export const PortalLayout = () => {
           />
           <div className="relative z-10 w-72 max-w-[80vw] bg-white h-full flex flex-col shadow-2xl">
             <div className="h-16 flex items-center justify-between px-5 border-b border-slate-100">
-              <BrandLogo size="default" />
+              <BrandLogo size="default" to={`/${rolePath}`} />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}

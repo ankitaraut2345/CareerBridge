@@ -9,6 +9,7 @@ export const BrandLogo = ({
   size = 'default',
   className = '',
   asLink = true,
+  to = '/',
 }) => {
   const heightClass =
     size === 'sm'
@@ -37,7 +38,7 @@ export const BrandLogo = ({
   }
 
   return (
-    <Link to="/" className="inline-flex items-center" aria-label="CareerBridge Home">
+    <Link to={to} className="inline-flex items-center" aria-label="CareerBridge Home">
       {content}
     </Link>
   );

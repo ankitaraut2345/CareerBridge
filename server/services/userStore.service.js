@@ -10,12 +10,24 @@ const memoryUsers = [];
 let memoryInitialized = false;
 const initMemoryStore = () => {
   if (memoryInitialized) return;
-  for (const demoUser of DEMO_USERS) {
-    const hashedPassword = bcrypt.hashSync(demoUser.password, 10);
+  let sourceUsers = DEMO_USERS;
+  try {
+    const { USERS_SEED } = require('../seed/seedData');
+    if (Array.isArray(USERS_SEED) && USERS_SEED.length > 0) {
+      sourceUsers = USERS_SEED;
+    }
+  } catch (err) {
+    sourceUsers = DEMO_USERS;
+  }
+
+  for (const demoUser of sourceUsers) {
+    const hashedPassword = demoUser.password && demoUser.password.startsWith('$2')
+      ? demoUser.password
+      : bcrypt.hashSync(demoUser.password || 'demo123', 10);
     const emailPrefix = demoUser.email.toLowerCase().split('@')[0].replace('.', '_');
-    const id = ['student', 'alumni', 'tpo', 'admin'].includes(emailPrefix)
+    const id = demoUser.key || (['student', 'alumni', 'tpo', 'admin'].includes(emailPrefix)
       ? 'demo_' + emailPrefix
-      : emailPrefix;
+      : emailPrefix);
 
     memoryUsers.push({
       _id: id,
@@ -23,8 +35,8 @@ const initMemoryStore = () => {
       email: demoUser.email.toLowerCase(),
       password: hashedPassword,
       role: demoUser.role,
-      verificationStatus: demoUser.verificationStatus,
-      isActive: true,
+      verificationStatus: demoUser.verificationStatus || 'VERIFIED',
+      isActive: demoUser.isActive !== false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

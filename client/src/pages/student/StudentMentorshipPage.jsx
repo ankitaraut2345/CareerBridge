@@ -106,7 +106,8 @@ export const StudentMentorshipPage = () => {
     setLoading(true);
     try {
       const res = await getMentors({ search: searchQuery });
-      const apiMentors = res.data?.data?.mentors || [];
+      const payload = res?.data?.mentors ? res.data : (res?.data ?? res ?? {});
+      const apiMentors = payload.mentors || (Array.isArray(payload) ? payload : []);
       if (apiMentors.length > 0) {
         // Merge with visual enhancements
         const enhanced = apiMentors.map((m, idx) => ({

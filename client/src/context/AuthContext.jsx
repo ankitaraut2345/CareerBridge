@@ -10,9 +10,18 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize auth state from stored token
+  // Initialize auth state from stored token or query parameter
   useEffect(() => {
-    const token = localStorage.getItem('careerbridge_token');
+    let token = localStorage.getItem('careerbridge_token');
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryToken = urlParams.get('token');
+      if (queryToken) {
+        token = queryToken;
+        localStorage.setItem('careerbridge_token', queryToken);
+      }
+    } catch (e) {}
+
     if (token) {
       api
         .get('/auth/me')

@@ -48,7 +48,7 @@ export const ReferralDetailPage = () => {
     setError(null);
     try {
       const res = await getReferralOpportunityById(id);
-      setReferral(res.data?.data || null);
+      setReferral(res?.data || res || null);
     } catch (err) {
       setError(
         err.response?.data?.message || 'Unable to load referral opportunity details.'

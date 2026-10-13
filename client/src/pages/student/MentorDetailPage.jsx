@@ -42,7 +42,8 @@ export const MentorDetailPage = () => {
     setError(null);
     try {
       const res = await getMentorById(id);
-      setMentor(res.data?.data || null);
+      const data = res?.data?.mentor ? res.data.mentor : (res?.data ?? res ?? null);
+      setMentor(data);
     } catch (err) {
       setError(
         err.response?.data?.message || 'Unable to load mentor profile details.'
@@ -233,24 +234,48 @@ export const MentorDetailPage = () => {
         {/* Current Mentorship Status Banner / Action */}
         <div className="mt-8 pt-6 border-t border-slate-100">
           {!existing || existing.status === 'CANCELLED' ? (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#EEF2FF] to-white p-5 rounded-2xl border border-indigo-100">
-              <div>
-                <h3 className="text-sm font-bold text-[#172033]">
-                  Ready to connect with {mentor.fullName}?
-                </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Request 1-on-1 career guidance, technical mock discussion, or resume feedback.
-                </p>
+            mentor.mentorshipAvailable === false ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Currently Not Accepting New Mentees
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {mentor.fullName} is currently focused on work commitments and is not available for new 1-on-1 mentorship pairings. You can still explore their background and skills.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled
+                  className="px-5 py-2.5 text-xs font-semibold text-slate-400 bg-slate-100 border border-slate-200 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5 flex-shrink-0"
+                >
+                  <Ban className="w-4 h-4 text-slate-400" />
+                  <span>Mentorship Unavailable</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="px-6 py-2.5 text-xs font-semibold text-white bg-[#4F46E5] hover:bg-[#4338CA] rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 flex-shrink-0"
-              >
-                <Send className="w-4 h-4" />
-                <span>Request Mentorship</span>
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#EEF2FF] to-white p-5 rounded-2xl border border-indigo-100">
+                <div>
+                  <h3 className="text-sm font-bold text-[#172033]">
+                    Ready to connect with {mentor.fullName}?
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Request 1-on-1 career guidance, technical mock discussion, or resume feedback.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-6 py-2.5 text-xs font-semibold text-white bg-[#4F46E5] hover:bg-[#4338CA] rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 flex-shrink-0"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Request Mentorship</span>
+                </button>
+              </div>
+            )
           ) : existing.status === 'PENDING' ? (
             <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">

@@ -47,7 +47,7 @@ export const AlumniMentorshipPage = () => {
     setError(null);
     try {
       const res = await getAlumniRequests();
-      setRequests(res.data?.data || []);
+      setRequests(res?.data || (Array.isArray(res) ? res : []));
     } catch (err) {
       setError(
         err.response?.data?.message ||

@@ -40,7 +40,7 @@ export const MyReferralRequestsPage = () => {
     setError(null);
     try {
       const res = await getMyReferralRequests();
-      setRequests(res.data?.data || []);
+      setRequests(res?.data || (Array.isArray(res) ? res : []));
     } catch (err) {
       setError(
         err.response?.data?.message || 'Failed to load your referral requests.'

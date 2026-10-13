@@ -166,16 +166,18 @@ const saveAlumniProfile = async (userId, data) => {
 };
 
 /**
- * Query all verified mentors who have enabled mentorship
- * STRICT RULE: Only verificationStatus === 'VERIFIED' and mentorshipAvailable === true
+ * Query all verified alumni profiles
+ * By default returns all VERIFIED alumni so directory displays availability status.
+ * If onlyAvailable === true, filters to mentorshipAvailable === true.
  */
-const getVerifiedMentors = async () => {
+const getVerifiedMentors = async ({ onlyAvailable = false } = {}) => {
   if (isDbConnected()) {
     try {
-      const profiles = await AlumniProfile.find({
-        verificationStatus: 'VERIFIED',
-        mentorshipAvailable: true,
-      }).lean();
+      const query = { verificationStatus: 'VERIFIED' };
+      if (onlyAvailable) {
+        query.mentorshipAvailable = true;
+      }
+      const profiles = await AlumniProfile.find(query).lean();
       if (profiles && profiles.length > 0) {
         return profiles;
       }
@@ -185,7 +187,7 @@ const getVerifiedMentors = async () => {
   }
 
   return memoryAlumniProfiles.filter(
-    (p) => p.verificationStatus === 'VERIFIED' && p.mentorshipAvailable === true
+    (p) => p.verificationStatus === 'VERIFIED' && (!onlyAvailable || p.mentorshipAvailable === true)
   );
 };
 

@@ -1,11 +1,21 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import BrandLogo from '../components/BrandLogo';
+import { useAuth } from '../context/AuthContext';
 import { UserPlus, ArrowLeft } from 'lucide-react';
 
 export const RegisterPage = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, loading } = useAuth();
+
+  // Auto-redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated && user?.role) {
+      navigate(`/${user.role.toLowerCase()}`, { replace: true });
+    }
+  }, [loading, isAuthenticated, user, navigate]);
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <Card className="max-w-md w-full text-center" padding="lg">

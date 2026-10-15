@@ -163,6 +163,13 @@ async function main() {
     return outPath;
   }
 
+  // 0. Home Page
+  await capturePage(
+    'http://localhost:5173',
+    'homepage.png',
+    3000
+  );
+
   // 1. Alumni Directory Full View
   await capturePage(
     `http://localhost:5173/student/mentors?token=${token}`,

@@ -361,7 +361,7 @@ async function runSecurityAudit() {
   );
 
   // 5.3 Cannot apply to CLOSED opportunity (deadline enforcement)
-  const closedApply = await request('/api/opportunities/opp_deloitte_closed/apply', {
+  const closedApply = await request('/api/opportunities/opp_deloitte_analyst/apply', {
     method: 'POST',
     headers: { Authorization: `Bearer ${studentToken}` },
   }, { applicationMessage: 'I want to apply late.' });

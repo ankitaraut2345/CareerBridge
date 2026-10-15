@@ -17,16 +17,24 @@ const { setIo, createNotification } = require('./services/notificationStore.serv
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB and seed demo users if DB is online
-connectDB().then(() => {
-  seedDemoUsersIntoDb();
-});
+connectDB()
+  .then(() => {
+    seedDemoUsersIntoDb();
+  })
+  .catch((err) => {
+    if ((process.env.NODE_ENV || '').trim().toLowerCase() === 'production') {
+      console.error('💥 Fatal: MongoDB connection failed in production. Halting process:', err.message);
+      process.exit(1);
+    }
+  });
 
 // ─── HTTP Server ──────────────────────────────────────────────────────────────
 const httpServer = http.createServer(app);
 
 // ─── Socket.IO Setup ──────────────────────────────────────────────────────────
+const socketClientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/+$/, '') : null;
 const socketAllowedOrigins = [
-  process.env.CLIENT_URL,
+  socketClientUrl,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',

@@ -50,20 +50,30 @@ console.log(`💾 Memory store initialized with ${memoryUsers.length} demo users
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
- * Seed demo users into MongoDB if connected and not yet seeded
+ * Seed demo users into MongoDB if connected and not yet seeded.
+ * Strictly blocked in production environments to prevent automatic demo account creation.
  */
 const seedDemoUsersIntoDb = async () => {
-  if (!isDbConnected()) return;
+  const isProduction = (process.env.NODE_ENV || '').trim().toLowerCase() === 'production';
+  if (isProduction) {
+    console.log('🔒 Production mode detected: Automatic demo user seeding is disabled.');
+    return { skipped: true, reason: 'production' };
+  }
+  if (!isDbConnected()) return { skipped: true, reason: 'db_not_connected' };
   try {
+    let seededCount = 0;
     for (const demoUser of DEMO_USERS) {
       const existing = await User.findOne({ email: demoUser.email.toLowerCase() });
       if (!existing) {
         await User.create(demoUser);
+        seededCount++;
         console.log(`🌱 Seeded demo account: ${demoUser.email} (${demoUser.role})`);
       }
     }
+    return { success: true, seededCount };
   } catch (err) {
     console.error('Error seeding demo accounts into MongoDB:', err.message);
+    return { success: false, error: err.message };
   }
 };
 

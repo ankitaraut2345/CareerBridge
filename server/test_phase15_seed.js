@@ -42,7 +42,7 @@ const {
 const { seedDatabase, validateEnvironment } = require('./seed/seeder');
 
 // Services for functional verification
-const { findUserByEmailWithPassword, findUserById } = require('./services/userStore.service');
+const { findUserByEmailWithPassword, findUserById, seedDemoUsersIntoDb } = require('./services/userStore.service');
 const { getStudentDashboardData, getAlumniDashboardData, getTpoDashboardData, getAdminDashboardData } = require('./services/dashboardStore.service');
 
 let passedTests = 0;
@@ -80,7 +80,65 @@ const runVerification = async () => {
   } catch (err) {
     assert(err.message.includes('SAFETY BLOCK'), 'validateEnvironment strictly blocks execution in production');
   } finally {
-    process.env.NODE_ENV = prevEnv;
+    if (prevEnv === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = prevEnv;
+    }
+  }
+
+  // Verify seedDemoUsersIntoDb production block
+  const prevEnvForSeed = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = 'production';
+    const prodSeedResult = await seedDemoUsersIntoDb();
+    assert(
+      prodSeedResult && prodSeedResult.skipped === true && prodSeedResult.reason === 'production',
+      'seedDemoUsersIntoDb strictly refuses to seed demo accounts in production'
+    );
+  } finally {
+    if (prevEnvForSeed === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = prevEnvForSeed;
+    }
+  }
+
+  // Verify seedDemoUsersIntoDb non-production behavior
+  const nonProdSeedResult = await seedDemoUsersIntoDb();
+  assert(
+    nonProdSeedResult && (nonProdSeedResult.success === true || nonProdSeedResult.reason === 'db_not_connected'),
+    'seedDemoUsersIntoDb proceeds safely in non-production environments'
+  );
+
+  // Verify connectDB fails fast in production when MONGODB_URI is missing
+  const connectDB = require('./config/db');
+  const prevEnvForDb = process.env.NODE_ENV;
+  const prevUriForDb = process.env.MONGODB_URI;
+  try {
+    process.env.NODE_ENV = 'production';
+    delete process.env.MONGODB_URI;
+    let threw = false;
+    try {
+      await connectDB();
+    } catch (err) {
+      threw = true;
+      assert(err.message.includes('MONGODB_URI is not defined'), 'connectDB throws error in production when MONGODB_URI is missing');
+    }
+    if (!threw) {
+      assert(false, 'connectDB failed to throw error in production when MONGODB_URI was missing');
+    }
+  } finally {
+    if (prevEnvForDb === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = prevEnvForDb;
+    }
+    if (prevUriForDb === undefined) {
+      delete process.env.MONGODB_URI;
+    } else {
+      process.env.MONGODB_URI = prevUriForDb;
+    }
   }
 
   // ─── 2. MONGOOSE SCHEMA VALIDATION (100% OF SEED FIXTURES) ────────────────

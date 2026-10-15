@@ -206,9 +206,14 @@ const DEMO_ROLE_EMAIL_MAP = {
 };
 
 /**
- * Check if demo login is enabled via environment variable
+ * Check if demo login is enabled via environment variable.
+ * Hard-locked to always return false in production environments.
  */
 const isDemoLoginEnabled = () => {
+  const normalizedEnv = (process.env.NODE_ENV || '').trim().toLowerCase();
+  if (normalizedEnv === 'production') {
+    return false;
+  }
   return process.env.ENABLE_DEMO_LOGIN === 'true';
 };
 

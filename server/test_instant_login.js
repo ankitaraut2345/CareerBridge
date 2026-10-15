@@ -306,7 +306,54 @@ async function runTestSuite() {
       );
     } finally {
       // Restore original flag
-      process.env.ENABLE_DEMO_LOGIN = originalFlag;
+      if (originalFlag === undefined) {
+        delete process.env.ENABLE_DEMO_LOGIN;
+      } else {
+        process.env.ENABLE_DEMO_LOGIN = originalFlag;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Test Group 7B: Production Environment Hard-Lock Safeguard
+    // -------------------------------------------------------------
+    console.log('\n--- Test Group 7B: Production Environment Hard-Lock Safeguard ---');
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalDemoLogin = process.env.ENABLE_DEMO_LOGIN;
+    try {
+      // Simulate production environment with misconfigured ENABLE_DEMO_LOGIN=true
+      process.env.NODE_ENV = 'production';
+      process.env.ENABLE_DEMO_LOGIN = 'true';
+
+      const prodStatusRes = await request('/api/auth/demo-login');
+      assert(
+        prodStatusRes.status === 200 && prodStatusRes.body?.enabled === false,
+        'GET /api/auth/demo-login reports enabled: false when NODE_ENV=production'
+      );
+      assert(
+        Array.isArray(prodStatusRes.body?.roles) && prodStatusRes.body.roles.length === 0,
+        'The returned demo roles array is empty when NODE_ENV=production'
+      );
+
+      const prodPostRes = await request(
+        '/api/auth/demo-login',
+        { method: 'POST' },
+        { role: 'STUDENT' }
+      );
+      assert(
+        prodPostRes.status === 403,
+        'POST /api/auth/demo-login returns HTTP 403 Forbidden when NODE_ENV=production'
+      );
+    } finally {
+      if (originalNodeEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+      if (originalDemoLogin === undefined) {
+        delete process.env.ENABLE_DEMO_LOGIN;
+      } else {
+        process.env.ENABLE_DEMO_LOGIN = originalDemoLogin;
+      }
     }
 
     // -------------------------------------------------------------

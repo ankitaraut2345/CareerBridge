@@ -4,8 +4,19 @@ import axios from 'axios';
  * Reusable Axios instance for CareerBridge API
  * Base URL configured from environment variable VITE_API_URL
  */
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // When deployed together on Vercel, relative /api path routes seamlessly to the API serverless function
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: getBaseUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

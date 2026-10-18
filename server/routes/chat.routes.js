@@ -7,6 +7,7 @@ const {
   getConversationsForUser,
   getConversationById,
   getMessages,
+  saveMessage,
 } = require('../services/chatStore.service');
 const { BadRequestError } = require('../utils/error');
 
@@ -68,6 +69,53 @@ router.get('/conversations/:id/messages', authenticate, async (req, res, next) =
     const before = req.query.before || null;
     const messages = await getMessages(req.params.id, { limit, before });
     res.json({ success: true, data: messages });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/chat/conversations/:id/messages
+ * Send a new message via REST (used when WebSockets are unavailable or in serverless environments).
+ * Body: { body: string }
+ */
+router.post('/conversations/:id/messages', authenticate, async (req, res, next) => {
+  try {
+    const { body } = req.body || {};
+    if (!body || !body.trim()) {
+      throw new BadRequestError('Message body cannot be empty.');
+    }
+    if (body.trim().length > 2000) {
+      throw new BadRequestError('Message cannot exceed 2000 characters.');
+    }
+
+    // Verify participant access
+    const conv = await getConversationById(req.params.id, req.user.id);
+    const message = await saveMessage(req.params.id, req.user.id, body.trim());
+
+    // Best-effort notification to the other participant
+    try {
+      const { createNotification } = require('../services/notificationStore.service');
+      const otherId = (conv?.participants || [])
+        .map((p) => (typeof p === 'object' && p !== null ? (p._id || p.id || '').toString() : p.toString()))
+        .find((p) => p && p !== req.user.id);
+      if (otherId) {
+        createNotification({
+          recipientId: otherId,
+          type: 'NEW_CHAT_MESSAGE',
+          title: 'New Message',
+          message: `${req.user.name || 'User'}: "${body.trim().length > 60 ? body.trim().slice(0, 60) + '…' : body.trim()}"`,
+          relatedEntityType: 'Conversation',
+          relatedEntityId: req.params.id,
+          actionUrl: '/chat',
+        }).catch(() => {});
+      }
+    } catch (_) {}
+
+    res.status(201).json({
+      success: true,
+      data: message,
+    });
   } catch (err) {
     next(err);
   }

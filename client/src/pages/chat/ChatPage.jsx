@@ -6,6 +6,7 @@ import {
   getConversations,
   openConversation,
   getMessages,
+  sendMessage,
 } from '../../services/chatService';
 import {
   MessageCircle,
@@ -314,6 +315,31 @@ const ChatPage = () => {
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
+  // ── Polling fallback when running in REST mode (e.g. serverless) ──────────
+  useEffect(() => {
+    if (connected || !activeConvId) return;
+
+    const interval = setInterval(() => {
+      getMessages(activeConvId)
+        .then((msgs) => {
+          if (Array.isArray(msgs)) {
+            setMessages((prev) => {
+              if (
+                msgs.length !== prev.length ||
+                (msgs.length > 0 && msgs[msgs.length - 1]?._id !== prev[prev.length - 1]?._id)
+              ) {
+                return msgs;
+              }
+              return prev;
+            });
+          }
+        })
+        .catch(() => {});
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [connected, activeConvId]);
+
   // ── Send a Message ────────────────────────────────────────────────────────
   const handleSend = useCallback(() => {
     const body = draft.trim();
@@ -326,7 +352,32 @@ const ChatPage = () => {
       setDraft('');
       setSending(false);
     } else {
-      setError('Not connected to chat server. Please refresh.');
+      // Fallback: send via REST (supports serverless / Vercel deployment)
+      const convId = activeConvIdRef.current;
+      setSending(true);
+      sendMessage(convId, body)
+        .then((res) => {
+          const newMsg = res.data || res;
+          setMessages((prev) => {
+            if (prev.some((m) => m._id === newMsg._id)) return prev;
+            return [...prev, newMsg];
+          });
+          setConversations((prev) =>
+            prev.map((c) =>
+              c._id === convId
+                ? { ...c, lastMessage: newMsg.body, lastMessageAt: newMsg.createdAt }
+                : c
+            )
+          );
+          setDraft('');
+          setError(null);
+        })
+        .catch((err) => {
+          setError(err.response?.data?.message || err.message || 'Failed to send message.');
+        })
+        .finally(() => {
+          setSending(false);
+        });
     }
     inputRef.current?.focus();
   }, [draft, sending]);

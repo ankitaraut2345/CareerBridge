@@ -471,24 +471,35 @@ const seedDatabase = async ({ closeOnFinish = true } = {}) => {
         participants: { $all: [idA, idB], $size: 2 },
       });
 
+      let contextType = c.contextType;
       let contextId = null;
-      if (c.contextType === 'MENTORSHIP') {
+      if (contextType === 'MENTORSHIP') {
         contextId = mentorshipMap.get(`${keyA}_${keyB}`) || mentorshipMap.get(`${keyB}_${keyA}`) || null;
-      } else if (c.contextType === 'REFERRAL') {
+      } else if (contextType === 'REFERRAL') {
         contextId = refOppMap.get(c.contextKey) || null;
+      } else {
+        if (mentorshipMap.has(`${keyA}_${keyB}`) || mentorshipMap.has(`${keyB}_${keyA}`)) {
+          contextType = 'MENTORSHIP';
+          contextId = mentorshipMap.get(`${keyA}_${keyB}`) || mentorshipMap.get(`${keyB}_${keyA}`);
+        } else if (referralRequestMap.has(`${keyA}_${keyB}`) || referralRequestMap.has(`${keyB}_${keyA}`)) {
+          contextType = 'REFERRAL';
+          contextId = referralRequestMap.get(`${keyA}_${keyB}`) || referralRequestMap.get(`${keyB}_${keyA}`);
+        } else {
+          contextType = 'MENTORSHIP';
+        }
       }
 
       if (!conv) {
         conv = await Conversation.create({
           participants: [idA, idB],
-          contextType: c.contextType,
+          contextType,
           contextId,
           lastMessage: '',
           lastMessageAt: new Date(),
         });
         stats.conversations.created++;
       } else {
-        conv.contextType = c.contextType;
+        conv.contextType = contextType;
         if (contextId) conv.contextId = contextId;
         await conv.save();
         stats.conversations.updated++;
@@ -497,27 +508,33 @@ const seedDatabase = async ({ closeOnFinish = true } = {}) => {
       // Seed messages
       let lastMsgText = '';
       let lastMsgDate = new Date();
-      for (const m of c.messages) {
+      for (const m of (c.messages || [])) {
         const senderId = userMap.get(m.senderKey);
         if (!senderId) continue;
 
-        const msgDate = new Date(Date.now() - (m.minutesAgo || 0) * 60000);
+        const body = m.body || m.content || '';
+        if (!body) continue;
+
+        const msgDate = m.minutesAgo !== undefined
+          ? new Date(Date.now() - m.minutesAgo * 60000)
+          : (m.daysAgo !== undefined ? new Date(Date.now() - m.daysAgo * 86400000) : new Date());
+
         const existingMsg = await Message.findOne({
           conversationId: conv._id,
           senderId,
-          body: m.body,
+          body,
         });
 
         if (!existingMsg) {
           await Message.create({
             conversationId: conv._id,
             senderId,
-            body: m.body,
+            body,
             createdAt: msgDate,
           });
           stats.messages.created++;
         }
-        lastMsgText = m.body;
+        lastMsgText = body;
         lastMsgDate = msgDate;
       }
 

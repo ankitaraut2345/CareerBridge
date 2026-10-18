@@ -15,7 +15,7 @@
  * 12. Token signature is verified against JWT_SECRET using the existing auth service
  */
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const http = require('http');
 const jwt = require('jsonwebtoken');
 const app = require('./app');

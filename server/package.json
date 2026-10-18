@@ -9,7 +9,9 @@
     "seed": "node seed/seeder.js",
     "test": "node test_phase16_security.js",
     "test:security": "node test_phase16_security.js",
-    "test:instant-login": "node test_instant_login.js"
+    "test:instant-login": "node test_instant_login.js",
+    "test:chat-rest": "node test_chat_rest.js",
+    "test:atlas": "node test_atlas_connection.js"
   },
   "keywords": [
     "careerbridge",

@@ -34,17 +34,30 @@ app.use((req, res, next) => {
 
 // ── CORS Configuration ───────────────────────────────────────────────────────
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/+$/, '') : null;
+const vercelEnvUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.trim().replace(/\/+$/, '')}` : null;
+
 const allowedOrigins = [
   clientUrl,
+  vercelEnvUrl,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
 ].filter(Boolean);
 
+// Legitimate Vercel preview domain pattern: https://<subdomain>.vercel.app
+const isLegitimateVercelOrigin = (origin) => {
+  return /^https:\/\/[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*\.vercel\.app$/.test(origin);
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (Postman, curl, internal tests) or matching allowed origins
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    // Allow non-browser requests (Postman, curl, internal tests), dev environments, exact allowed origins, or verified Vercel preview domains
+    if (
+      !origin ||
+      process.env.NODE_ENV !== 'production' ||
+      allowedOrigins.includes(origin) ||
+      isLegitimateVercelOrigin(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Blocked by CORS policy'));

@@ -33,17 +33,29 @@ const httpServer = http.createServer(app);
 
 // ─── Socket.IO Setup ──────────────────────────────────────────────────────────
 const socketClientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/+$/, '') : null;
+const socketVercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.trim().replace(/\/+$/, '')}` : null;
+
 const socketAllowedOrigins = [
   socketClientUrl,
+  socketVercelUrl,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
 ].filter(Boolean);
 
+const isLegitimateSocketOrigin = (origin) => {
+  return /^https:\/\/[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*\.vercel\.app$/.test(origin);
+};
+
 const io = new SocketIOServer(httpServer, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin || socketAllowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      if (
+        !origin ||
+        process.env.NODE_ENV !== 'production' ||
+        socketAllowedOrigins.includes(origin) ||
+        isLegitimateSocketOrigin(origin)
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by Socket.IO CORS policy'));

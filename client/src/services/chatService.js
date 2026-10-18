@@ -35,3 +35,10 @@ export const canChat = async (otherUserId) => {
   const res = await api.get(`/chat/can-chat/${otherUserId}`);
   return res;
 };
+
+/** Send a message via REST */
+export const sendMessage = async (conversationId, body) => {
+  const res = await api.post(`/chat/conversations/${conversationId}/messages`, { body });
+  return res.data;
+};
+

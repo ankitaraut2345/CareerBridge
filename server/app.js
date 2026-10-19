@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
 const testRoutes = require('./routes/test.routes');
@@ -71,6 +72,27 @@ app.use(cors({
 // ── Body Parser with Explicit Limits ─────────────────────────────────────────
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// ── Normalize API Prefix ─────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/favicon')) {
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+  }
+  next();
+});
+
+// ── Ensure MongoDB Connection (Serverless Cold & Warm Reuse) ─────────────────
+const connectDB = require('./config/db');
+app.use(async (req, res, next) => {
+  if (process.env.MONGODB_URI && mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.error('Database connection error in request pipeline:', err.message);
+    }
+  }
+  next();
+});
 
 // ── API Routes with Rate Limiting ────────────────────────────────────────────
 app.use('/api', healthRoutes);

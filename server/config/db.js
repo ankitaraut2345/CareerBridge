@@ -27,10 +27,17 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
     };
 
-    cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
-      console.log(`✅ MongoDB Connected successfully: ${mongooseInstance.connection.host}`);
-      return mongooseInstance;
-    });
+    cached.promise = mongoose
+      .connect(uri, opts)
+      .then((mongooseInstance) => {
+        console.log(`✅ MongoDB Connected successfully: ${mongooseInstance.connection.host}`);
+        return mongooseInstance;
+      })
+      .catch((error) => {
+        cached.promise = null;
+        console.error('❌ MongoDB Connection Failed:', error.message);
+        throw error;
+      });
   }
 
   try {
@@ -38,7 +45,6 @@ const connectDB = async () => {
     return cached.conn;
   } catch (error) {
     cached.promise = null;
-    console.error('❌ MongoDB Connection Failed:', error.message);
     if (isProduction) {
       throw error;
     }

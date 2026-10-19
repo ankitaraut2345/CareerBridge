@@ -10,11 +10,11 @@
   },
   "rewrites": [
     {
-      "source": "/api",
+      "source": "/api/((?!index\\.js$).*)",
       "destination": "/api/index.js"
     },
     {
-      "source": "/api/(.*)",
+      "source": "/api",
       "destination": "/api/index.js"
     },
     {

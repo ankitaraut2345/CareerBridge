@@ -1,5 +1,5 @@
-const pdfParse = require('pdf-parse');
-
+// Lazy-load pdf-parse with runtime canvas polyfills inside extractResumeText
+// to prevent ReferenceError: DOMMatrix is not defined on serverless environments (Vercel/AWS Lambda)
 /**
  * CareerBridge AI Resume Analysis Service
  *
@@ -107,8 +107,30 @@ Certifications: ${certsStr || 'AWS Certified Cloud Practitioner, Oracle Java Ass
       throw new Error("We couldn't read enough text from this resume. Please upload a text-based PDF resume.");
     }
 
-    const pdfData = await pdfParse(buffer);
-    const rawText = pdfData.text || '';
+    // Polyfill canvas globals required by pdfjs-dist in serverless environments
+    if (typeof global.DOMMatrix === 'undefined') {
+      global.DOMMatrix = class DOMMatrix {};
+    }
+    if (typeof global.ImageData === 'undefined') {
+      global.ImageData = class ImageData {};
+    }
+    if (typeof global.Path2D === 'undefined') {
+      global.Path2D = class Path2D {};
+    }
+
+    const pdfModule = require('pdf-parse');
+    let rawText = '';
+    if (typeof pdfModule === 'function') {
+      const pdfData = await pdfModule(buffer);
+      rawText = pdfData.text || '';
+    } else if (pdfModule && pdfModule.PDFParse) {
+      const parser = new pdfModule.PDFParse({ data: new Uint8Array(buffer) });
+      const textResult = await parser.getText();
+      rawText = textResult?.text || (typeof textResult === 'string' ? textResult : '');
+    } else {
+      throw new Error('Unsupported PDF parsing interface.');
+    }
+
     const cleanedText = rawText
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
       .replace(/\s+/g, ' ')

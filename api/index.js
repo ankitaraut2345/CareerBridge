@@ -6,6 +6,17 @@ process.on('uncaughtException', (err) => {
   console.error('⚠️ Uncaught Exception in Serverless Container:', err);
 });
 
+// Polyfill browser globals required by PDF/Canvas dependencies in serverless Node.js
+if (typeof global.DOMMatrix === 'undefined') {
+  global.DOMMatrix = class DOMMatrix {};
+}
+if (typeof global.ImageData === 'undefined') {
+  global.ImageData = class ImageData {};
+}
+if (typeof global.Path2D === 'undefined') {
+  global.Path2D = class Path2D {};
+}
+
 const app = require('../server/app');
 
 /**

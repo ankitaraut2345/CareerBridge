@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { isSandboxActive, handleSandboxRequest } from './demoSandboxService';
+
+const defaultAdapter = axios.getAdapter(axios.defaults.adapter);
 
 /**
  * Reusable Axios instance for CareerBridge API
@@ -21,11 +24,22 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  adapter: async (config) => {
+    if (isSandboxActive()) {
+      return handleSandboxRequest(config);
+    }
+    return defaultAdapter(config);
+  },
 });
 
-// Request interceptor – inject JWT token if present
+// Request interceptor – inject JWT token if present (never in sandbox mode)
 api.interceptors.request.use(
   (config) => {
+    if (isSandboxActive()) {
+      // Safeguard: Never send real Authorization header in demo sandbox
+      delete config.headers['Authorization'];
+      return config;
+    }
     const token = localStorage.getItem('careerbridge_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;

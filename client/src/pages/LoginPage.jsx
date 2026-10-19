@@ -59,7 +59,7 @@ const QUICK_ROLES = [
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, login, demoLogin, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, login, enterDemoSandbox, loading: authLoading } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
 
   // Auto-redirect to dashboard if already authenticated
@@ -73,10 +73,6 @@ export const LoginPage = () => {
   const [quickLoginRole, setQuickLoginRole] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [demoStatus, setDemoStatus] = useState({
-    enabled: true,
-    loaded: false,
-  });
 
   // Load remembered email on mount
   useEffect(() => {
@@ -85,28 +81,6 @@ export const LoginPage = () => {
       setForm((prev) => ({ ...prev, email: savedEmail }));
       setRememberMe(true);
     }
-  }, []);
-
-  // Check demo-login capability dynamically from backend
-  useEffect(() => {
-    let isMounted = true;
-    api
-      .get('/auth/demo-login')
-      .then((res) => {
-        if (isMounted && res && typeof res.enabled === 'boolean') {
-          setDemoStatus({ enabled: res.enabled, loaded: true });
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          const envSetting = import.meta.env.VITE_ENABLE_DEMO_LOGIN;
-          const isAllowed = envSetting !== 'false';
-          setDemoStatus({ enabled: isAllowed, loaded: true });
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const handleChange = (e) => {
@@ -137,18 +111,17 @@ export const LoginPage = () => {
     }
   };
 
-  const handleQuickLogin = async (role) => {
+  const handleQuickLogin = (role) => {
     if (quickLoginRole || isSubmitting) return; // Prevent duplicate clicks
     setError('');
     setQuickLoginRole(role);
 
     try {
-      await demoLogin(role);
+      enterDemoSandbox(role);
     } catch (err) {
       setError(
-        err?.response?.data?.message ||
-          err?.message ||
-          `Quick login for ${role} failed. Please verify that demo mode is enabled.`
+        err?.message ||
+          `Unable to launch Demo Showcase Mode for ${role}. Please try again.`
       );
       setQuickLoginRole(null);
     }
@@ -360,7 +333,7 @@ export const LoginPage = () => {
             {/* Subtle note at bottom */}
             <div className="mt-8 pt-4 text-center">
               <p className="text-xs text-slate-400">
-                1-Click test connects to pre-seeded demo accounts with standard role permissions.
+                1-Click test launches Demo Showcase Mode with isolated, fictional data.
               </p>
             </div>
           </div>

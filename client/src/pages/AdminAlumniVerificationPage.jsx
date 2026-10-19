@@ -46,7 +46,7 @@ export const AdminAlumniVerificationPage = () => {
     setActionId(id + status);
     try {
       await verifyAlumni(id, status);
-      setAlumni(prev => prev.map(a => a._id === id ? { ...a, verificationStatus: status } : a));
+      setAlumni(prev => prev.map(a => (a._id === id || a.id === id) ? { ...a, verificationStatus: status } : a));
       showToast('success', `Alumni ${status === 'VERIFIED' ? 'verified' : 'rejected'} successfully`);
     } catch (err) {
       showToast('error', err.message || 'Action failed');
@@ -132,20 +132,22 @@ export const AdminAlumniVerificationPage = () => {
       ) : (
         <div className="space-y-4">
           {filtered.map((alumnus) => {
+            const alumnusId = alumnus._id || alumnus.id;
             const status = alumnus.verificationStatus || 'PENDING';
             const isPending = status === 'PENDING';
+            const displayName = alumnus.fullName || alumnus.name || 'Alumni Member';
             return (
-              <div key={alumnus._id}
+              <div key={alumnusId}
                 className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* Info */}
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center flex-shrink-0 text-lg font-bold">
-                      {(alumnus.name || 'A').charAt(0).toUpperCase()}
+                      {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-[#172033] text-base">{alumnus.name}</h3>
+                        <h3 className="font-semibold text-[#172033] text-base">{displayName}</h3>
                         <StatusBadge status={status} />
                       </div>
                       <p className="text-sm text-slate-500 mt-0.5">{alumnus.email}</p>
@@ -156,7 +158,7 @@ export const AdminAlumniVerificationPage = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <User className="w-3.5 h-3.5" />
-                          ID: {alumnus._id.slice(-8)}
+                          ID: {(alumnusId || '').slice(-8)}
                         </span>
                         {alumnus.createdAt && (
                           <span>Registered: {new Date(alumnus.createdAt).toLocaleDateString()}</span>
@@ -171,18 +173,18 @@ export const AdminAlumniVerificationPage = () => {
                       <>
                         <button
                           disabled={!!actionId}
-                          onClick={() => handleVerify(alumnus._id, 'VERIFIED')}
+                          onClick={() => handleVerify(alumnusId, 'VERIFIED')}
                           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
-                          {actionId === alumnus._id + 'VERIFIED'
+                          {actionId === alumnusId + 'VERIFIED'
                             ? <Loader2 className="w-4 h-4 animate-spin" />
                             : <CheckCircle className="w-4 h-4" />}
                           Verify
                         </button>
                         <button
                           disabled={!!actionId}
-                          onClick={() => handleVerify(alumnus._id, 'REJECTED')}
+                          onClick={() => handleVerify(alumnusId, 'REJECTED')}
                           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
-                          {actionId === alumnus._id + 'REJECTED'
+                          {actionId === alumnusId + 'REJECTED'
                             ? <Loader2 className="w-4 h-4 animate-spin" />
                             : <XCircle className="w-4 h-4" />}
                           Reject

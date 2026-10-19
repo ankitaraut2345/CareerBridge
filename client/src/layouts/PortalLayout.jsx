@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import BrandLogo from '../components/BrandLogo';
+import DemoSandboxBanner from '../components/DemoSandboxBanner';
 import {
   Home,
   Briefcase,
@@ -622,6 +623,7 @@ export const PortalLayout = () => {
 
       {/* ─── MAIN CONTENT VIEWPORT ─── */}
       <div className="flex-1 flex flex-col min-w-0">
+        <DemoSandboxBanner />
         {/* Top Header Bar */}
         <header className="h-16 sm:h-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20">
           {/* Mobile menu trigger */}
